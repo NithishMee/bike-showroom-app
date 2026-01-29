@@ -1,0 +1,340 @@
+{
+  "collections": {
+    "bikes": [
+      {
+        "name": "Hero Splendor+ XTEC 2.0",
+        "price": 82911,
+        "mileage": 73.0,
+        "engineCC": 97.2,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/splendor-plus-xtec/splendor-plus-xtec-2-0/color-360/matte-grey/1.png",
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/splendor-plus-xtec/splendor-plus-xtec-2-0/color-360/gloss-black/1.png"
+        ],
+        "description": "India's No. 1 motorcycle now with advanced XTEC technology. Features full LED headlamp, digital console with Bluetooth, and best-in-class mileage.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "4 Speed Constant Mesh"
+          },
+          {
+            "key": "Brakes",
+            "value": "Drum (IBS)"
+          },
+          {
+            "key": "Kerb Weight",
+            "value": "112 kg"
+          },
+          {
+            "key": "Fuel Tank",
+            "value": "9.8 L"
+          },
+          {
+            "key": "Tech",
+            "value": "i3S Technology, Bluetooth"
+          }
+        ]
+      },
+      {
+        "name": "Hero XPulse 200 4V",
+        "price": 146276,
+        "mileage": 40.0,
+        "engineCC": 199.6,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/xpulse-200-4v/color-360/matte-nexus-blue/1.png",
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/xpulse-200-4v/color-360/techno-blue/1.png"
+        ],
+        "description": "Make new tracks with the Hero XPulse 200 4V. The ultimate adventure bike with 4-valve engine technology and rally-ready suspension.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "5 Speed"
+          },
+          {
+            "key": "Brakes",
+            "value": "Disc (Front & Rear) with ABS"
+          },
+          {
+            "key": "Ground Clearance",
+            "value": "220 mm"
+          },
+          {
+            "key": "Power",
+            "value": "19.1 PS @ 8500 rpm"
+          },
+          {
+            "key": "Features",
+            "value": "Turn-by-Turn Navigation"
+          }
+        ]
+      },
+      {
+        "name": "Hero Xtreme 125R",
+        "price": 95000,
+        "mileage": 66.0,
+        "engineCC": 124.7,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/xtreme-125r/color-360/firestorm-red/1.png"
+        ],
+        "description": "Challenge the extreme with the new Xtreme 125R. Best-in-segment acceleration (0-60 in 5.9s) and single-channel ABS.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "5 Speed"
+          },
+          {
+            "key": "Brakes",
+            "value": "Disc (Front) / Drum (Rear)"
+          },
+          {
+            "key": "0-60 kmph",
+            "value": "5.9 Seconds"
+          },
+          {
+            "key": "Lighting",
+            "value": "All LED Setup"
+          },
+          {
+            "key": "Safety",
+            "value": "Single Channel ABS"
+          }
+        ]
+      },
+      {
+        "name": "Hero Mavrick 440",
+        "price": 199000,
+        "mileage": 32.0,
+        "engineCC": 440,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/mavrick-440/color-360/arctic-white/1.png"
+        ],
+        "description": "Muscles of a roadster, heart of a maverick. Hero's flagship 440cc motorcycle designed for pure riding pleasure.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "6 Speed with Slip & Assist"
+          },
+          {
+            "key": "Torque",
+            "value": "36 Nm @ 4000 rpm"
+          },
+          {
+            "key": "Features",
+            "value": "eSIM Connected Tech"
+          },
+          {
+            "key": "Lighting",
+            "value": "Intelligent Auto Headlamp"
+          }
+        ]
+      },
+      {
+        "name": "Hero HF Deluxe",
+        "price": 59998,
+        "mileage": 65.0,
+        "engineCC": 97.2,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/hf-deluxe/color-360/canvas-black/1.png"
+        ],
+        "description": "Naye India ki Nayi Deluxe. The most trusted commuter bike with programmed FI technology for better mileage.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "4 Speed"
+          },
+          {
+            "key": "Brakes",
+            "value": "Drum (IBS)"
+          },
+          {
+            "key": "Weight",
+            "value": "110 kg"
+          },
+          {
+            "key": "Tech",
+            "value": "xSens Technology"
+          }
+        ]
+      },
+      {
+        "name": "Hero Karizma XMR",
+        "price": 179900,
+        "mileage": 41.5,
+        "engineCC": 210,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/karizma-xmr/color-360/iconic-yellow/1.png"
+        ],
+        "description": "Live the Legend. The all-new Karizma XMR with a powerful 210cc liquid-cooled engine and aggressive fully-faired design.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "6 Speed"
+          },
+          {
+            "key": "Power",
+            "value": "25.5 PS @ 9250 rpm"
+          },
+          {
+            "key": "Cooling",
+            "value": "Liquid Cooled"
+          },
+          {
+            "key": "Tech",
+            "value": "Turn-by-Turn Navigation"
+          }
+        ]
+      },
+      {
+        "name": "Hero Glamour XTEC",
+        "price": 87748,
+        "mileage": 60.0,
+        "engineCC": 124.7,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/glamour-xtec/color-360/candy-blazing-red/1.png"
+        ],
+        "description": "Lead the game with Glamour XTEC. Features navigation assist, mobile charging, and LED headlamps.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "5 Speed"
+          },
+          {
+            "key": "Brakes",
+            "value": "Disc (Front) Option"
+          },
+          {
+            "key": "Tech",
+            "value": "Bluetooth & Navigation"
+          },
+          {
+            "key": "Fuel Tank",
+            "value": "10 L"
+          }
+        ]
+      },
+      {
+        "name": "Hero Destini 125 XTEC",
+        "price": 86538,
+        "mileage": 50.0,
+        "engineCC": 124.6,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/scooters/destini-125-xtec/color-360/nexus-blue/1.png"
+        ],
+        "description": "The perfect blend of style and technology. A premium 125cc scooter with retro styling and modern XTEC features.",
+        "specs": [
+          {
+            "key": "Type",
+            "value": "Scooter"
+          },
+          {
+            "key": "Transmission",
+            "value": "CVT (Automatic)"
+          },
+          {
+            "key": "Boot Space",
+            "value": "Mobile Charging Port"
+          },
+          {
+            "key": "Comfort",
+            "value": "Backrest Included"
+          },
+          {
+            "key": "Tech",
+            "value": "Digi-Analog Console"
+          }
+        ]
+      },
+      {
+        "name": "Hero Passion+",
+        "price": 78451,
+        "mileage": 70.0,
+        "engineCC": 97.2,
+        "images": [
+          "https://www.heromotocorp.com/content/dam/hero-aem-website/in/products/motorcycles/passion-plus/color-360/sports-red/1.png"
+        ],
+        "description": "Style meets savings. The iconic Passion+ returns with enhanced comfort and superior mileage.",
+        "specs": [
+          {
+            "key": "Fuel Type",
+            "value": "Petrol"
+          },
+          {
+            "key": "Transmission",
+            "value": "4 Speed"
+          },
+          {
+            "key": "Brakes",
+            "value": "Drum (IBS)"
+          },
+          {
+            "key": "Comfort",
+            "value": "Plush Seat"
+          },
+          {
+            "key": "Tech",
+            "value": "i3S Technology"
+          }
+        ]
+      }
+    ],
+    "offers": [
+      {
+        "title": "Exchange Carnival",
+        "description": "Exchange your old two-wheeler and get up to ₹3000 exchange bonus on Hero Splendor+!",
+        "discount": "₹3000 Bonus",
+        "image": "https://www.heromotocorp.com/content/dam/hero-aem-website/in/promotions/exchange-bonus.jpg",
+        "validUntil": "31/03/2026"
+      },
+      {
+        "title": "GoodLife Program",
+        "description": "Join Hero GoodLife program and earn points on every service. Redeem points for exciting rewards.",
+        "discount": "Membership Benefits",
+        "validUntil": "Always On"
+      },
+      {
+        "title": "Corporate Offer",
+        "description": "Special discounts for corporate employees on Mavrick 440 and Xpulse 200 4V.",
+        "discount": "Up to ₹5000 OFF",
+        "validUntil": "15/04/2026"
+      }
+    ]
+  },
+  "instructions": {
+    "note": "This is a reference file. Copy the data manually to Firestore Console.",
+    "steps": [
+      "1. Go to Firebase Console > Firestore Database",
+      "2. Create collection 'bikes'",
+      "3. Add documents from the bikes array above",
+      "4. Create collection 'offers'",
+      "5. Add documents from the offers array above",
+      "6. Collections 'enquiries' and 'testRides' will be created automatically when users submit forms"
+    ]
+  }
+}
