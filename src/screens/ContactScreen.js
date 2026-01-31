@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, StatusBar, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, SIZES, SHADOWS } from '../utils/theme';
+
+const { width } = Dimensions.get('window');
 
 const ContactScreen = () => {
   const showroomAddress = "123 Main Street, City Center, Mumbai - 400001";
@@ -17,185 +20,267 @@ const ContactScreen = () => {
   };
 
   const handleOpenMaps = () => {
-    // Open Google Maps with the address
     const encodedAddress = encodeURIComponent(showroomAddress);
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`);
   };
 
+  const ContactCard = ({ icon, title, content, action, actionLabel, color }) => (
+    <View style={styles.card}>
+      <View style={styles.iconContainer}>
+        <View style={[styles.iconCircle, { backgroundColor: `${color}15` }]}>
+          <Ionicons name={icon} size={28} color={color} />
+        </View>
+      </View>
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardValue}>{content}</Text>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: color }]} onPress={action}>
+          <Text style={styles.actionButtonText}>{actionLabel}</Text>
+          <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="location-outline" size={48} color="#007AFF" />
-          <Text style={styles.title}>Contact Us</Text>
-          <Text style={styles.subtitle}>Visit our showroom or get in touch</Text>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Hero Header */}
+      <LinearGradient
+        colors={[COLORS.primaryDark, COLORS.primary]}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Get in Touch</Text>
+          <Text style={styles.headerSubtitle}>We'd love to hear from you</Text>
         </View>
 
-        {/* Address Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="business-outline" size={24} color="#007AFF" />
-            <Text style={styles.cardTitle}>Showroom Address</Text>
-          </View>
-          <Text style={styles.address}>{showroomAddress}</Text>
-          <TouchableOpacity style={styles.mapButton} onPress={handleOpenMaps}>
-            <Ionicons name="map-outline" size={20} color="#007AFF" />
-            <Text style={styles.mapButtonText}>Open in Maps</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Decorative Pattern */}
+        <Ionicons name="chatbubbles-outline" size={120} color="rgba(255,255,255,0.1)" style={styles.headerIcon} />
+      </LinearGradient>
 
-        {/* Contact Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="call-outline" size={24} color="#007AFF" />
-            <Text style={styles.cardTitle}>Phone</Text>
-          </View>
-          <Text style={styles.contactInfo}>{phoneNumber}</Text>
-          <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-            <Ionicons name="call" size={20} color="#fff" />
-            <Text style={styles.contactButtonText}>Call Now</Text>
-          </TouchableOpacity>
-        </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* Email Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="mail-outline" size={24} color="#007AFF" />
-            <Text style={styles.cardTitle}>Email</Text>
-          </View>
-          <Text style={styles.contactInfo}>{email}</Text>
-          <TouchableOpacity style={styles.emailButton} onPress={handleEmail}>
-            <Ionicons name="mail" size={20} color="#007AFF" />
-            <Text style={styles.emailButtonText}>Send Email</Text>
-          </TouchableOpacity>
+        {/* Main Contact Cards */}
+        <View style={styles.cardsContainer}>
+          <ContactCard
+            icon="location"
+            title="Visit Our Showroom"
+            content={showroomAddress}
+            action={handleOpenMaps}
+            actionLabel="Get Directions"
+            color="#FF9800"
+          />
+
+          <ContactCard
+            icon="call"
+            title="Call Us"
+            content={phoneNumber}
+            action={handleCall}
+            actionLabel="Call Now"
+            color="#2196F3"
+          />
+
+          <ContactCard
+            icon="mail"
+            title="Email Support"
+            content={email}
+            action={handleEmail}
+            actionLabel="Send Email"
+            color="#E91E63"
+          />
         </View>
 
         {/* Business Hours */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="time-outline" size={24} color="#007AFF" />
-            <Text style={styles.cardTitle}>Business Hours</Text>
+        <View style={styles.hoursCard}>
+          <View style={styles.hoursHeader}>
+            <Ionicons name="time" size={24} color={COLORS.textPrimary} />
+            <Text style={styles.hoursTitle}>Business Hours</Text>
           </View>
-          <View style={styles.hoursContainer}>
-            <Text style={styles.hoursText}>Monday - Saturday: 9:00 AM - 8:00 PM</Text>
-            <Text style={styles.hoursText}>Sunday: 10:00 AM - 6:00 PM</Text>
+          <View style={styles.divider} />
+          <View style={styles.hourRow}>
+            <Text style={styles.day}>Monday - Saturday</Text>
+            <Text style={styles.time}>9:00 AM - 8:00 PM</Text>
+          </View>
+          <View style={styles.hourRow}>
+            <Text style={styles.day}>Sunday</Text>
+            <Text style={styles.time}>10:00 AM - 6:00 PM</Text>
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Connect Section */}
+        <View style={styles.connectSection}>
+          <Text style={styles.connectTitle}>Connect with us</Text>
+          <View style={styles.socialRow}>
+            {['logo-facebook', 'logo-instagram', 'logo-twitter', 'logo-whatsapp'].map((icon, index) => (
+              <TouchableOpacity key={index} style={styles.socialIcon}>
+                <Ionicons name={icon} size={24} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 16,
+    backgroundColor: '#F8F9FA',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 16,
+    height: 240,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  title: {
-    fontSize: 28,
+  headerContent: {
+    zIndex: 2,
+  },
+  headerTitle: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#000',
-    marginTop: 16,
+    color: COLORS.white,
+    marginBottom: 5,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    color: '#666',
-    marginTop: 8,
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.9)',
+  },
+  headerIcon: {
+    position: 'absolute',
+    right: -20,
+    bottom: -30,
+    transform: [{ rotate: '-10deg' }]
+  },
+  scrollView: {
+    flex: 1,
+    marginTop: -80,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  cardsContainer: {
+    marginBottom: 20,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
+    ...SHADOWS.medium,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+  },
+  iconContainer: {
+    marginRight: 15,
+  },
+  iconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardContent: {
+    flex: 1,
   },
   cardTitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  cardValue: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  actionButtonText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  hoursCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    ...SHADOWS.light,
+  },
+  hoursHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  hoursTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: COLORS.textPrimary,
+    marginLeft: 10,
   },
-  address: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 16,
+  divider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginBottom: 15,
   },
-  contactInfo: {
-    fontSize: 18,
-    color: '#000',
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  mapButton: {
+  hourRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#E3F2FD',
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  mapButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
+  day: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
     fontWeight: '600',
   },
-  contactButton: {
+  time: {
+    fontSize: 15,
+    color: COLORS.textPrimary,
+    fontWeight: '700',
+  },
+  connectSection: {
+    alignItems: 'center',
+  },
+  connectTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 15,
+  },
+  socialRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 20,
+  },
+  socialIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    gap: 8,
-  },
-  contactButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emailButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#E3F2FD',
-    gap: 8,
-  },
-  emailButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  hoursContainer: {
-    gap: 8,
-  },
-  hoursText: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-  },
+    ...SHADOWS.light,
+  }
 });
 
 export default ContactScreen;

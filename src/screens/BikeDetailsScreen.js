@@ -1,175 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { addToWishlist, removeFromWishlist, isInWishlist } from '../utils/storage';
-import { COLORS, SHADOWS } from '../utils/theme';
+import { getBikeImage } from '../utils/imageMapper';
+import { COLORS, SIZES, SHADOWS } from '../utils/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 const BikeDetailsScreen = ({ route, navigation }) => {
-  const bike = route?.params?.bike;
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [inWishlist, setInWishlist] = useState(false);
+  const { bike } = route.params;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [activeImage, setActiveImage] = useState(0);
 
-  useEffect(() => {
-    if (bike) {
-      checkWishlistStatus();
-    }
-  }, [bike]);
+  // Animation for header
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
-  const checkWishlistStatus = async () => {
-    const status = await isInWishlist(bike.id);
-    setInWishlist(status);
-  };
+  const imageScale = scrollY.interpolate({
+    inputRange: [-100, 0],
+    outputRange: [1.2, 1],
+    extrapolate: 'clamp',
+  });
 
-  const handleWishlistToggle = async () => {
-    if (inWishlist) {
-      await removeFromWishlist(bike.id);
-      setInWishlist(false);
-      Alert.alert('Removed', 'Bike removed from wishlist');
-    } else {
-      await addToWishlist(bike.id);
-      setInWishlist(true);
-      Alert.alert('Added', 'Bike added to wishlist');
-    }
-  };
-
-  const handleEnquireNow = () => {
-    navigation.navigate('EnquiryForm', { bikeName: bike.name });
-  };
-
-  const handleBookTestRide = () => {
-    navigation.navigate('TestRideBooking', { bikeName: bike.name });
-  };
-
-  if (!bike) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Bike information not available</Text>
-      </View>
-    );
-  }
-
-  const images = bike.images && bike.images.length > 0 ? bike.images : ['https://via.placeholder.com/400'];
+  // Ensure images is an array
+  const bikeImages = bike.images || (bike.image ? [bike.image] : []);
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Image Gallery */}
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: images[currentImageIndex] }}
-          style={styles.mainImage}
-          resizeMode="cover"
-        />
-        {images.length > 1 && (
-          <View style={styles.imageIndicators}>
-            {images.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.indicator,
-                  currentImageIndex === index && styles.indicatorActive
-                ]}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
+      {/* Animated Header */}
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+        <Text style={styles.headerTitle}>{bike.name}</Text>
+      </Animated.View>
+
+      {/* Back Button (Always Visible) */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+      </TouchableOpacity>
+
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Gallery Section */}
+        <Animated.View style={[styles.imageContainer, { transform: [{ scale: imageScale }] }]}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const slide = Math.ceil(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+              setActiveImage(slide);
+            }}
+          >
+            {bikeImages.length > 0 ? (
+              bikeImages.map((img, index) => (
+                <Image
+                  key={index}
+                  source={getBikeImage(img) || { uri: 'https://via.placeholder.com/400' }}
+                  style={styles.image}
+                  resizeMode="contain"
+                />
+              ))
+            ) : (
+              <Image
+                source={{ uri: 'https://via.placeholder.com/400' }}
+                style={styles.image}
+                resizeMode="contain"
               />
-            ))}
-          </View>
-        )}
-        {images.length > 1 && (
-          <>
-            <TouchableOpacity
-              style={[styles.imageNavButton, styles.imageNavButtonLeft]}
-              onPress={() => setCurrentImageIndex(
-                currentImageIndex > 0 ? currentImageIndex - 1 : images.length - 1
-              )}
-            >
-              <Ionicons name="chevron-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.imageNavButton, styles.imageNavButtonRight]}
-              onPress={() => setCurrentImageIndex(
-                currentImageIndex < images.length - 1 ? currentImageIndex + 1 : 0
-              )}
-            >
-              <Ionicons name="chevron-forward" size={24} color="#fff" />
-            </TouchableOpacity>
-          </>
-        )}
-        <TouchableOpacity style={styles.wishlistButton} onPress={handleWishlistToggle}>
-          <Ionicons
-            name={inWishlist ? 'heart' : 'heart-outline'}
-            size={28}
-            color={inWishlist ? '#FF3B30' : '#fff'}
-          />
-        </TouchableOpacity>
-      </View>
+            )}
+          </ScrollView>
 
-      {/* Bike Info */}
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.name}>{bike.name}</Text>
-          <Text style={styles.price}>₹{bike.price?.toLocaleString() || 'N/A'}</Text>
-        </View>
+          {/* Pagination Dots */}
+          {bikeImages.length > 1 && (
+            <View style={styles.pagination}>
+              {bikeImages.map((_, i) => (
+                <View key={i} style={[styles.dot, i === activeImage && styles.activeDot]} />
+              ))}
+            </View>
+          )}
+        </Animated.View>
 
-        {/* Description First */}
-        {bike.description && (
-          <View style={styles.descriptionSection}>
-            <Text style={styles.description}>{bike.description}</Text>
+        {/* Content Section */}
+        <View style={styles.contentContainer}>
+          <View style={styles.titleRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{bike.name}</Text>
+              <Text style={styles.category}>{bike.category || 'Motorcycle'}</Text>
+            </View>
+            <View>
+              <Text style={styles.priceLabel}>Ex-showroom</Text>
+              <Text style={styles.price}>₹ {bike.price?.toLocaleString()}</Text>
+            </View>
           </View>
-        )}
 
-        <Text style={styles.sectionHeader}>Performance Graph</Text>
-        {/* Key Specs Grid */}
-        <View style={styles.specsGrid}>
-          <View style={styles.specCard}>
-            <Ionicons name="speedometer" size={24} color={COLORS.primary} />
-            <Text style={styles.specValue}>{bike.mileage || '--'} kmpl</Text>
-            <Text style={styles.specLabel}>Mileage</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Ionicons name="flash" size={24} color={COLORS.primary} />
-            <Text style={styles.specValue}>{bike.engineCC || '--'} CC</Text>
-            <Text style={styles.specLabel}>Engine</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Ionicons name="hardware-chip" size={24} color={COLORS.primary} />
-            <Text style={styles.specValue}>{bike.specs?.find(s => s.key === 'Weight')?.value || '--'}</Text>
-            <Text style={styles.specLabel}>Weight</Text>
-          </View>
-          <View style={styles.specCard}>
-            <Ionicons name="cog" size={24} color={COLORS.primary} />
-            <Text style={styles.specValue}>{bike.specs?.find(s => s.key === 'Transmission')?.value || '--'}</Text>
-            <Text style={styles.specLabel}>Gearbox</Text>
-          </View>
-        </View>
+          <Text style={styles.description}>{bike.description}</Text>
 
-        {/* Detailed Specs List */}
-        {bike.specs && bike.specs.length > 0 && (
-          <View style={styles.specsSection}>
-            <Text style={styles.sectionHeader}>Full Specifications</Text>
-            {bike.specs.map((spec, index) => (
+          {/* Quick Stats Grid */}
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Ionicons name="speedometer" size={24} color={COLORS.primary} />
+              <Text style={styles.statValue}>{bike.engineCC} cc</Text>
+              <Text style={styles.statLabel}>Engine</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Ionicons name="flask" size={24} color={COLORS.primary} />
+              <Text style={styles.statValue}>{bike.mileage} kmpl</Text>
+              <Text style={styles.statLabel}>Mileage</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Ionicons name="cog" size={24} color={COLORS.primary} />
+              <Text style={styles.statValue}>{bike.specs?.find(s => s.key === 'Kerb Weight')?.value || bike.weight || 'N/A'}</Text>
+              <Text style={styles.statLabel}>Weight</Text>
+            </View>
+          </View>
+
+          {/* Technical Specs */}
+          <Text style={styles.sectionTitle}>Technical Specifications</Text>
+          <View style={styles.specsContainer}>
+            {bike.specs?.map((spec, index) => (
               <View key={index} style={styles.specRow}>
                 <Text style={styles.specKey}>{spec.key}</Text>
-                <Text style={styles.specValueRow}>{spec.value}</Text>
+                <Text style={styles.specValue}>{spec.value}</Text>
               </View>
             ))}
           </View>
-        )}
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.button, styles.enquireButton]}
-            onPress={handleEnquireNow}
-          >
-            <Text style={styles.buttonText}>Enquire Now</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.testRideButton]}
-            onPress={handleBookTestRide}
-          >
-            <Text style={[styles.buttonText, styles.testRideButtonText]}>Book Test Ride</Text>
+          {/* Action Buttons */}
+          <TouchableOpacity style={styles.bookButton}>
+            <LinearGradient
+              colors={COLORS.primaryGradient}
+              style={styles.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.bookButtonText}>Book Test Ride</Text>
+              <Ionicons name="arrow-forward" size={20} color={COLORS.white} />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+      </Animated.ScrollView>
+    </View>
   );
 };
 
@@ -178,177 +160,167 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  imageContainer: {
-    width: '100%',
-    height: 300,
-    position: 'relative',
-    backgroundColor: COLORS.secondary,
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imageIndicators: {
+  header: {
     position: 'absolute',
-    bottom: 16,
+    top: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
+    height: 90,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    zIndex: 10,
+    paddingTop: 45,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  indicator: {
+  headerTitle: {
+    fontSize: SIZES.h3,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 8,
+    ...SHADOWS.light,
+  },
+  imageContainer: {
+    height: 350,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: width,
+    height: 300,
+  },
+  pagination: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center', // Center the pagination dots
+  },
+  dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: COLORS.textLight,
+    marginHorizontal: 4,
   },
-  indicatorActive: {
-    backgroundColor: COLORS.white,
-    width: 24,
+  activeDot: {
+    backgroundColor: COLORS.primary,
+    width: 20,
   },
-  imageNavButton: {
-    position: 'absolute',
-    top: '50%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 8,
+  contentContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    padding: SIZES.padding,
+    ...SHADOWS.dark,
   },
-  imageNavButtonLeft: {
-    left: 16,
-  },
-  imageNavButtonRight: {
-    right: 16,
-  },
-  wishlistButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 10,
-  },
-  content: {
-    padding: 20,
-  },
-  headerRow: {
-    marginBottom: 16,
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   name: {
     fontSize: 26,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 4,
   },
-  price: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  specsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  specCard: {
-    width: '48%', // Approx 2 columns
-    backgroundColor: COLORS.card,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    ...SHADOWS.small,
-  },
-  specLabel: {
-    fontSize: 12,
+  category: {
+    fontSize: 14,
     color: COLORS.textSecondary,
     marginTop: 4,
   },
-  specValue: { // For the card
+  priceLabel: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    textAlign: 'right',
+  },
+  price: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  description: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    padding: 20,
+    borderRadius: SIZES.radius,
+    marginBottom: 25,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: COLORS.textPrimary,
     marginTop: 8,
-    textAlign: 'center',
   },
-  specsSection: {
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.textLight,
+  },
+  sectionTitle: {
+    fontSize: SIZES.h3,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: 15,
+  },
+  specsContainer: {
+    marginBottom: 30,
   },
   specRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.surfaceDark,
   },
   specKey: {
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.textSecondary,
-    flex: 1,
   },
-  specValueRow: { // For the list
-    fontSize: 15,
+  specValue: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+  },
+  bookButton: {
+    width: '100%',
+    height: 55,
+    borderRadius: SIZES.radius,
+    overflow: 'hidden',
+    marginTop: 10,
+    ...SHADOWS.medium,
+  },
+  gradient: {
     flex: 1,
-    textAlign: 'right',
-  },
-  descriptionSection: {
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  description: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
-    lineHeight: 24,
-  },
-  actionButtons: {
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 40,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  enquireButton: {
-    backgroundColor: COLORS.primary,
-  },
-  testRideButton: {
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  buttonText: {
+  bookButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.white,
-  },
-  testRideButtonText: {
-    color: COLORS.primary,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 50,
+    marginRight: 10,
   },
 });
 

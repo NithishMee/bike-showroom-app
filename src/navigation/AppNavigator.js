@@ -22,6 +22,7 @@ function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
@@ -41,13 +42,6 @@ function TabNavigator() {
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
-        headerStyle: {
-          backgroundColor: COLORS.primary,
-        },
-        headerTintColor: COLORS.white,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
         tabBarStyle: {
           borderTopColor: '#eee',
           backgroundColor: COLORS.white,
@@ -58,7 +52,6 @@ function TabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'Home' }}
       />
       <Tab.Screen name="Compare" component={CompareScreen} />
       <Tab.Screen name="Wishlist" component={WishlistScreen} />
@@ -73,34 +66,24 @@ function AppNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: COLORS.primary,
-        },
-        headerTintColor: COLORS.white,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false
       }}
     >
       <Stack.Screen
         name="MainTabs"
         component={TabNavigator}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="BikeDetails"
         component={BikeDetailsScreen}
-        options={{ title: 'Bike Details' }}
       />
       <Stack.Screen
         name="TestRideBooking"
         component={TestRideBookingScreen}
-        options={{ title: 'Book Test Ride' }}
       />
       <Stack.Screen
         name="EnquiryForm"
         component={EnquiryFormScreen}
-        options={{ title: 'Enquiry Form' }}
       />
     </Stack.Navigator>
   );

@@ -1,116 +1,180 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { getBikeImage } from '../utils/imageMapper';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SHADOWS } from '../utils/theme';
+import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 
-const BikeCard = ({ bike, onPress, onWishlistPress, isInWishlist }) => {
+const BikeCard = ({ bike, onPress, onWishlistPress, isInWishlist, index }) => {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+  const imageSource = getBikeImage(bike.images?.[0]);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleValue, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleValue, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: bike.images && bike.images[0] ? bike.images[0] : 'https://via.placeholder.com/300' }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        <TouchableOpacity
-          style={styles.wishlistButton}
-          onPress={onWishlistPress}
-        >
+    <Animated.View style={[
+      styles.cardContainer,
+      { transform: [{ scale: scaleValue }] },
+    ]}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.touchable}
+      >
+        {/* Wishlist Button */}
+        <TouchableOpacity style={styles.wishlistButton} onPress={onWishlistPress}>
           <Ionicons
-            name={isInWishlist ? 'heart' : 'heart-outline'}
+            name={isInWishlist ? "heart" : "heart-outline"}
             size={22}
-            color={isInWishlist ? COLORS.primary : COLORS.textPrimary}
+            color={isInWishlist ? COLORS.primary : COLORS.textSecondary}
           />
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.content}>
-        <Text style={styles.name}>{bike.name}</Text>
-        <Text style={styles.price}>₹{bike.price?.toLocaleString() || 'N/A'}</Text>
-
-        <View style={styles.specs}>
-          <View style={styles.specItem}>
-            <Ionicons name="speedometer-outline" size={16} color={COLORS.textSecondary} />
-            <Text style={styles.specText}>{bike.mileage || 'N/A'} kmpl</Text>
-          </View>
-          <View style={styles.seperator} />
-          <View style={styles.specItem}>
-            <Ionicons name="flash-outline" size={16} color={COLORS.textSecondary} />
-            <Text style={styles.specText}>{bike.engineCC || 'N/A'} CC</Text>
-          </View>
+        {/* Image Section */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={imageSource || { uri: 'https://via.placeholder.com/300' }}
+            style={styles.image}
+            resizeMode="contain"
+          />
         </View>
-      </View>
-    </TouchableOpacity>
+
+        {/* Info Section */}
+        <View style={styles.infoContainer}>
+          <Text style={styles.name} numberOfLines={1}>{bike.name}</Text>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Ex-showroom</Text>
+            <Text style={styles.price}>₹ {bike.price?.toLocaleString()}</Text>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Ionicons name="speedometer-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.statText}>{bike.engineCC} cc</Text>
+            </View>
+            <View style={styles.stat}>
+              <Ionicons name="flask-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.statText}>{bike.mileage} kmpl</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.viewButton} onPress={onPress}>
+            <Text style={styles.viewButtonText}>View Details</Text>
+            <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  cardContainer: {
     backgroundColor: COLORS.card,
-    borderRadius: 16,
-    marginBottom: 20,
+    borderRadius: SIZES.radius * 1.5,
+    marginVertical: 10,
+    marginHorizontal: 5,
     ...SHADOWS.medium,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
+    elevation: 5, // Android shadow
+  },
+  touchable: {
+    padding: 15,
+  },
+  wishlistButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    zIndex: 10,
+    backgroundColor: COLORS.surface,
+    padding: 8,
+    borderRadius: 20,
+    ...SHADOWS.light,
   },
   imageContainer: {
-    position: 'relative',
+    height: 180,
     width: '100%',
-    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radius,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  wishlistButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 8,
-    ...SHADOWS.small,
-  },
-  content: {
-    padding: 16,
+  infoContainer: {
+    paddingHorizontal: 5,
   },
   name: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: SIZES.h3,
+    fontWeight: '800',
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
-  price: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.primary,
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
     marginBottom: 12,
   },
-  specs: {
+  priceLabel: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    marginRight: 6,
+  },
+  price: {
+    fontSize: SIZES.h3,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  stat: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 15,
     backgroundColor: COLORS.surface,
-    padding: 10,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  specItem: {
+  statText: {
+    marginLeft: 4,
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  viewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginRight: 16,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceDark,
+    marginTop: 5,
   },
-  seperator: {
-    width: 1,
-    height: 16,
-    backgroundColor: COLORS.border,
-    marginRight: 16,
-  },
-  specText: {
+  viewButtonText: {
+    color: COLORS.primary,
+    fontWeight: '700',
+    marginRight: 5,
     fontSize: 14,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
+  }
 });
 
 export default BikeCard;

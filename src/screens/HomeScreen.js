@@ -1,19 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Dimensions, Image, StatusBar } from 'react-native';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../../firebase';
 import data from '../../sample-firestore-data.json';
 import BikeCard from '../components/BikeCard';
+import CustomLoader from '../components/CustomLoader';
 import { getWishlist, addToWishlist, removeFromWishlist } from '../utils/storage';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../utils/theme';
+import { COLORS, SIZES, SHADOWS } from '../utils/theme';
+
+const { width } = Dimensions.get('window');
+
+const CATEGORIES = ['All', 'Motorcycles', 'Scooters', 'Premium'];
 
 const HomeScreen = ({ navigation }) => {
   const [bikes, setBikes] = useState([]);
   const [filteredBikes, setFilteredBikes] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // Animation Values
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [120, 80],
+    extrapolate: 'clamp',
+  });
 
   // Fetch bikes from Firestore
   useEffect(() => {
@@ -21,34 +37,36 @@ const HomeScreen = ({ navigation }) => {
     loadWishlist();
   }, []);
 
+  // Filter Logic
+  useEffect(() => {
+    let result = bikes;
+
+    // 1. Search Filter
+    if (searchQuery.trim() !== '') {
+      result = result.filter(bike =>
+        bike.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // 2. Category Filter
+    if (selectedCategory !== 'All') {
+      if (selectedCategory === 'Scooters') {
+        result = result.filter(bike => bike.specs?.some(s => s.value === 'Scooter' || s.key === 'Type' && s.value === 'Scooter') || bike.name.includes('Pleasure') || bike.name.includes('Destini'));
+      } else if (selectedCategory === 'Motorcycles') {
+        result = result.filter(bike => !bike.specs?.some(s => s.value === 'Scooter') && !bike.name.includes('Pleasure') && !bike.name.includes('Destini'));
+      } else if (selectedCategory === 'Premium') {
+        result = result.filter(bike => bike.price > 100000);
+      }
+    }
+
+    setFilteredBikes(result);
+  }, [searchQuery, selectedCategory, bikes]);
+
   // Load wishlist on mount
   const loadWishlist = async () => {
     const wishlistData = await getWishlist();
     setWishlist(wishlistData);
   };
-
-  // Auto-Migration Check
-  useEffect(() => {
-    const checkAndMigrate = async () => {
-      // Small delay to let initial fetch happen, or just check directly from Firestore
-      const bikesCollection = collection(db, 'bikes');
-      const snapshot = await getDocs(bikesCollection);
-
-      const hasOldData = snapshot.docs.some(doc => {
-        const data = doc.data();
-        return data.name && (data.name.includes('Yamaha') || data.name.includes('Honda') || data.name.includes('Bajaj'));
-      });
-
-      const isEmpty = snapshot.empty;
-
-      if (hasOldData || isEmpty) {
-        console.log("Detected outdated or empty database. Starting auto-migration...");
-        await handleResetDatabase();
-      }
-    };
-
-    checkAndMigrate();
-  }, []);
 
   // Seed data to Firestore (Clear first then Add)
   const handleResetDatabase = async () => {
@@ -82,8 +100,8 @@ const HomeScreen = ({ navigation }) => {
         await addDoc(offersCollection, offer);
       }
 
-      alert('Database updated with Hero MotoCorp data!');
-      fetchBikes();
+      await fetchBikes(); // Re-fetch
+      alert('Database reset successful!');
     } catch (error) {
       console.error('Error seeding data:', error);
       alert('Error updating data: ' + error.message);
@@ -92,35 +110,36 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // Fetch bikes from Firestore
+  // Fetch bikes and offers from Firestore
   const fetchBikes = async () => {
     try {
       const bikesCollection = collection(db, 'bikes');
-      const bikesSnapshot = await getDocs(bikesCollection);
+      const offersCollection = collection(db, 'offers');
+
+      const [bikesSnapshot, offersSnapshot] = await Promise.all([
+        getDocs(bikesCollection),
+        getDocs(offersCollection)
+      ]);
+
       const bikesList = bikesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+      const offersList = offersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
       setBikes(bikesList);
       setFilteredBikes(bikesList);
+      setOffers(offersList);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching bikes:', error);
+      console.error('Error fetching data:', error);
       setLoading(false);
     }
   };
-
-  // Search functionality - filter bikes by name
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredBikes(bikes);
-    } else {
-      const filtered = bikes.filter(bike =>
-        bike.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredBikes(filtered);
-    }
-  }, [searchQuery, bikes]);
 
   // Handle wishlist toggle
   const handleWishlistToggle = async (bikeId) => {
@@ -140,58 +159,203 @@ const HomeScreen = ({ navigation }) => {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading bikes...</Text>
-      </View>
-    );
+    return <CustomLoader />;
   }
+
+  // Render Offer Item
+  const renderOfferItem = ({ item }) => (
+    <TouchableOpacity activeOpacity={0.9} style={styles.offerCard}>
+      <LinearGradient
+        colors={['#FF4D4D', '#B9120E']} // Richer red gradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.offerGradient}
+      >
+        <View style={styles.offerBadge}>
+          <Text style={styles.offerBadgeText}>Limited Time</Text>
+        </View>
+
+        <View style={styles.offerContent}>
+          <Text style={styles.offerTitle}>{item.title}</Text>
+          <Text style={styles.offerDiscount}>{item.discount}</Text>
+          <Text style={styles.offerDesc}>{item.description}</Text>
+
+          <View style={styles.claimButton}>
+            <Text style={styles.claimButtonText}>Claim Now</Text>
+            <Ionicons name="arrow-forward" size={14} color={COLORS.primary} />
+          </View>
+        </View>
+
+        {/* Decorative elements */}
+        <Ionicons name="pricetag" size={100} color="rgba(255,255,255,0.1)" style={styles.offerIconBg} />
+        <View style={styles.decorativeCircle} />
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Welcome to</Text>
+          <Text style={styles.brandName}>Hero Showroom</Text>
+        </View>
+        <TouchableOpacity style={styles.profileButton}>
+          <Image
+            source={{ uri: 'https://ui-avatars.com/api/?name=User&background=EE2824&color=fff' }}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+      </View>
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
+        <Ionicons name="search" size={24} color={COLORS.primary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search bikes..."
+          placeholder="Find your perfect ride..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={COLORS.textLight}
         />
-        {searchQuery.length > 0 && (
+        {searchQuery.length > 0 ? (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={COLORS.textSecondary} />
+            <Ionicons name="close-circle" size={24} color={COLORS.textLight} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="options-outline" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Bike List */}
+      {/* Main Content */}
       <FlatList
         data={filteredBikes}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            {/* Exclusive Offers Carousel */}
+            {offers.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Exclusive Offers</Text>
+
+                <View style={styles.carouselContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.carouselContent}
+                    decelerationRate="fast"
+                    snapToInterval={width * 0.7 + 16}
+                    snapToAlignment="center"
+                  >
+                    {offers.map((item, index) => (
+                      <TouchableOpacity key={index} activeOpacity={0.95} style={styles.heroOfferCard}>
+                        <LinearGradient
+                          colors={index % 2 === 0 ? ['#E53935', '#B71C1C'] : ['#1E88E5', '#0D47A1']} // Alternating gradients
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.heroGradient}
+                        >
+                          {/* Background Pattern */}
+                          <View style={styles.patternDots}>
+                            {[...Array(20)].map((_, i) => (
+                              <View key={i} style={[styles.patternDot, { left: Math.random() * 300, top: Math.random() * 150, opacity: Math.random() * 0.3 }]} />
+                            ))}
+                          </View>
+
+                          <View style={styles.heroContent}>
+                            <View style={styles.heroHeader}>
+                              <View style={styles.heroBadge}>
+                                <Text style={styles.heroBadgeText}>Limited Deal</Text>
+                              </View>
+                              <Text style={styles.heroValid}>{item.validUntil === 'Always On' ? 'Always Active' : `Ends ${item.validUntil}`}</Text>
+                            </View>
+
+                            <Text style={styles.heroTitle}>{item.title}</Text>
+                            <Text style={styles.heroDiscount}>{item.discount}</Text>
+                            <Text style={styles.heroDesc} numberOfLines={2}>{item.description}</Text>
+
+                            <View style={styles.heroButton}>
+                              <Text style={styles.heroButtonText}>Check Offer</Text>
+                              <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
+                            </View>
+                          </View>
+
+                          {/* Hero Icon */}
+                          <Ionicons
+                            name={index % 2 === 0 ? "gift" : "trophy"}
+                            size={140}
+                            color="rgba(255,255,255,0.15)"
+                            style={styles.heroIconBg}
+                          />
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            )}
+
+            {/* Categories */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Categories</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
+                {CATEGORIES.map((cat, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setSelectedCategory(cat)}
+                    style={[
+                      styles.categoryChip,
+                      selectedCategory === cat && styles.categoryChipSelected
+                    ]}
+                  >
+                    <Text style={[
+                      styles.categoryText,
+                      selectedCategory === cat && styles.categoryTextSelected
+                    ]}>
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Bike List Header */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>
+                {selectedCategory === 'All' ? 'All Bikes' : `${selectedCategory}`} ({filteredBikes.length})
+              </Text>
+            </View>
+          </>
+        }
+        renderItem={({ item, index }) => (
           <BikeCard
             bike={item}
             onPress={() => handleBikePress(item)}
             onWishlistPress={() => handleWishlistToggle(item.id)}
             isInWishlist={wishlist.includes(item.id)}
+            index={index}
           />
         )}
         contentContainerStyle={styles.listContent}
         ListFooterComponent={
-          <View style={{ padding: 20, alignItems: 'center' }}>
+          <View style={{ padding: 40, alignItems: 'center' }}>
             <TouchableOpacity
               onPress={handleResetDatabase}
-              style={{ padding: 10, backgroundColor: COLORS.surface, borderRadius: 8 }}
+              style={{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border }}
             >
-              <Text style={{ color: COLORS.textSecondary, fontSize: 12 }}>RELOAD HERO DATA (Dev Only)</Text>
+              <Text style={{ color: COLORS.textSecondary, fontSize: 10 }}>RESET DATA</Text>
             </TouchableOpacity>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
+            <Ionicons name="search" size={50} color={COLORS.textLight} />
             <Text style={styles.emptyText}>No bikes found</Text>
             <TouchableOpacity
               style={[styles.seedButton, { marginTop: 20, backgroundColor: COLORS.primary, padding: 12, borderRadius: 8 }]}
@@ -199,9 +363,6 @@ const HomeScreen = ({ navigation }) => {
             >
               <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>Load Hero MotoCorp Data</Text>
             </TouchableOpacity>
-            <Text style={{ marginTop: 10, fontSize: 12, color: COLORS.textSecondary, textAlign: 'center' }}>
-              (Clears existing data & adds Hero bikes)
-            </Text>
           </View>
         }
       />
@@ -212,47 +373,219 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    paddingHorizontal: SIZES.padding,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+  greeting: {
+    fontSize: SIZES.h4,
     color: COLORS.textSecondary,
+    fontFamily: 'System',
+  },
+  brandName: {
+    fontSize: SIZES.h2,
+    color: COLORS.textPrimary,
+    fontWeight: '800',
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...SHADOWS.light,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    margin: 16,
+    backgroundColor: COLORS.white,
+    marginHorizontal: SIZES.padding,
+    marginVertical: 15, // More vertical spacing
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
+    height: 55, // Taller
+    ...SHADOWS.medium, // Add shadow for floating effect
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#f0f0f0',
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    height: 50,
     fontSize: 16,
     color: COLORS.textPrimary,
+    fontWeight: '500',
+  },
+  filterButton: {
+    padding: 4,
+  },
+  sectionContainer: {
+    marginBottom: 25, // More spacing between sections
+    paddingHorizontal: SIZES.padding,
+  },
+  sectionTitle: {
+    fontSize: SIZES.h3,
+    fontWeight: '800', // Bolder title
+    color: COLORS.textPrimary,
+    marginBottom: 15,
+    letterSpacing: 0.5,
+  },
+  carouselContainer: {
+    height: 210, // Reduced height
+    marginTop: 5,
+  },
+  carouselContent: {
+    paddingHorizontal: 15,
+  },
+  heroOfferCard: {
+    width: width * 0.7, // Reduced width to 70%
+    height: 190, // Reduced height
+    marginHorizontal: 8,
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+    elevation: 8,
+  },
+  heroGradient: {
+    flex: 1,
+    padding: 20, // Reduced padding
+    position: 'relative',
+    // Removed justifyContent: 'space-between' to let content flow
+  },
+  heroContent: {
+    zIndex: 2,
+    flex: 1,
+    justifyContent: 'center', // Center content vertically
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10, // Reduced margin
+  },
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 4, // Reduced padding
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  heroBadgeText: {
+    color: COLORS.white,
+    fontSize: 10, // Reduced font
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  heroValid: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 11, // Reduced font
+    fontWeight: '600',
+  },
+  heroTitle: {
+    fontSize: 18, // Reduced from 20
+    color: '#fff',
+    fontWeight: '600',
+    opacity: 0.95,
+    marginBottom: 2,
+  },
+  heroDiscount: {
+    fontSize: 28, // Reduced from 34
+    color: '#fff',
+    fontWeight: '900',
+    letterSpacing: -1,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 8,
+    marginBottom: 6,
+    lineHeight: 32, // Adjusted line height
+  },
+  heroDesc: {
+    fontSize: 13, // Reduced from 15
+    color: 'rgba(255,255,255,0.95)',
+    maxWidth: '100%',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  heroButton: {
+    backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8, // Reduced padding
+    paddingHorizontal: 16, // Reduced padding
+    borderRadius: 30,
+    alignSelf: 'flex-start',
+    ...SHADOWS.light,
+  },
+  heroButtonText: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    marginRight: 6,
+    fontSize: 12, // Reduced from 14
+  },
+  heroIconBg: {
+    position: 'absolute',
+    right: -20,
+    bottom: -30,
+    transform: [{ rotate: '-10deg' }],
+  },
+  patternDots: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.3,
+  },
+  patternDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+  },
+  categoryList: {
+    flexDirection: 'row',
+  },
+  categoryChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: COLORS.surface,
+    borderRadius: 25,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  categoryChipSelected: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.primary,
+    ...SHADOWS.light,
+  },
+  categoryText: {
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  categoryTextSelected: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
   },
   listContent: {
-    padding: 16,
-    paddingTop: 0,
+    paddingBottom: 40,
   },
   emptyContainer: {
     padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 50,
   },
   emptyText: {
+    marginTop: 10,
     fontSize: 16,
     color: COLORS.textSecondary,
   },
