@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, StatusBar, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, StatusBar, Linking, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
@@ -26,18 +26,18 @@ const ContactScreen = () => {
 
   const ContactCard = ({ icon, title, content, action, actionLabel, color }) => (
     <View style={styles.card}>
-      <View style={styles.iconContainer}>
-        <View style={[styles.iconCircle, { backgroundColor: `${color}15` }]}>
-          <Ionicons name={icon} size={28} color={color} />
-        </View>
+      <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
+        <Ionicons name={icon} size={24} color={color} />
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{title}</Text>
         <Text style={styles.cardValue}>{content}</Text>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: color }]} onPress={action}>
-          <Text style={styles.actionButtonText}>{actionLabel}</Text>
-          <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
-        </TouchableOpacity>
+        {action && (
+          <TouchableOpacity style={styles.linkButton} onPress={action}>
+            <Text style={[styles.linkText, { color }]}>{actionLabel}</Text>
+            <Ionicons name="arrow-forward" size={14} color={color} />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -46,78 +46,99 @@ const ContactScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Hero Header */}
-      <LinearGradient
-        colors={[COLORS.primaryDark, COLORS.primary]}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Get in Touch</Text>
-          <Text style={styles.headerSubtitle}>We'd love to hear from you</Text>
-        </View>
+      {/* Premium Gradient Header */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#B71C1C', '#D32F2F', '#E53935']}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.patternDots}>
+            {[...Array(20)].map((_, i) => (
+              <View key={i} style={[styles.patternDot, { left: Math.random() * width, top: Math.random() * 150, opacity: Math.random() * 0.4 }]} />
+            ))}
+          </View>
 
-        {/* Decorative Pattern */}
-        <Ionicons name="chatbubbles-outline" size={120} color="rgba(255,255,255,0.1)" style={styles.headerIcon} />
-      </LinearGradient>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Get in Touch</Text>
+            <Text style={styles.headerSubtitle}>We'd love to hear from you</Text>
+          </View>
+        </LinearGradient>
+      </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* Main Contact Cards */}
-        <View style={styles.cardsContainer}>
+        {/* Placeholder Map / Showroom Image */}
+        <View style={styles.mapContainer}>
+          <View style={styles.mapPlaceholder}>
+            <Ionicons name="map" size={40} color="#CFD8DC" />
+            <Text style={styles.mapText}>Showroom Location Map</Text>
+            <TouchableOpacity style={styles.mapButton} onPress={handleOpenMaps}>
+              <Text style={styles.mapButtonText}>View on Google Maps</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Contact Info Cards */}
+        <View style={styles.sectionContainer}>
           <ContactCard
             icon="location"
-            title="Visit Our Showroom"
+            title="Our Showroom"
             content={showroomAddress}
             action={handleOpenMaps}
             actionLabel="Get Directions"
-            color="#FF9800"
+            color="#E65100"
           />
 
           <ContactCard
             icon="call"
-            title="Call Us"
+            title="Phone Number"
             content={phoneNumber}
             action={handleCall}
             actionLabel="Call Now"
-            color="#2196F3"
+            color="#1565C0"
           />
 
           <ContactCard
             icon="mail"
-            title="Email Support"
+            title="Email Address"
             content={email}
             action={handleEmail}
             actionLabel="Send Email"
-            color="#E91E63"
+            color="#C2185B"
           />
         </View>
 
         {/* Business Hours */}
         <View style={styles.hoursCard}>
           <View style={styles.hoursHeader}>
-            <Ionicons name="time" size={24} color={COLORS.textPrimary} />
+            <Ionicons name="time-outline" size={24} color={COLORS.textPrimary} />
             <Text style={styles.hoursTitle}>Business Hours</Text>
           </View>
           <View style={styles.divider} />
+
           <View style={styles.hourRow}>
             <Text style={styles.day}>Monday - Saturday</Text>
-            <Text style={styles.time}>9:00 AM - 8:00 PM</Text>
+            <View style={styles.timeBadge}>
+              <Text style={styles.time}>9:00 AM - 8:00 PM</Text>
+            </View>
           </View>
           <View style={styles.hourRow}>
             <Text style={styles.day}>Sunday</Text>
-            <Text style={styles.time}>10:00 AM - 6:00 PM</Text>
+            <View style={[styles.timeBadge, { backgroundColor: '#FFF3E0' }]}>
+              <Text style={[styles.time, { color: '#E65100' }]}>10:00 AM - 6:00 PM</Text>
+            </View>
           </View>
         </View>
 
-        {/* Connect Section */}
-        <View style={styles.connectSection}>
-          <Text style={styles.connectTitle}>Connect with us</Text>
-          <View style={styles.socialRow}>
-            {['logo-facebook', 'logo-instagram', 'logo-twitter', 'logo-whatsapp'].map((icon, index) => (
-              <TouchableOpacity key={index} style={styles.socialIcon}>
-                <Ionicons name={icon} size={24} color={COLORS.primary} />
+        {/* Social Media Footer */}
+        <View style={styles.socialSection}>
+          <Text style={styles.socialTitle}>Connect with us</Text>
+          <View style={styles.socialIcons}>
+            {['logo-facebook', 'logo-instagram', 'logo-twitter', 'logo-whatsapp'].map((icon, i) => (
+              <TouchableOpacity key={i} style={styles.socialBtn}>
+                <Ionicons name={icon} size={22} color={COLORS.primary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -134,20 +155,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  header: {
-    height: 240,
+  headerContainer: {
+    marginBottom: 0,
+    zIndex: 1,
+  },
+  headerGradient: {
     paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingBottom: 50,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    position: 'relative',
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerContent: {
-    zIndex: 2,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.white,
     marginBottom: 5,
@@ -155,78 +179,102 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
-  },
-  headerIcon: {
-    position: 'absolute',
-    right: -20,
-    bottom: -30,
-    transform: [{ rotate: '-10deg' }]
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
-    marginTop: -80,
+    marginTop: -30,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  cardsContainer: {
+  mapContainer: {
+    height: 140,
+    width: '100%',
+    backgroundColor: '#ECEFF1',
+    borderRadius: 20,
+    marginBottom: 20,
+    ...SHADOWS.medium,
+    overflow: 'hidden',
+  },
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 20,
+  },
+  mapText: {
+    color: '#90A4AE',
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  mapButton: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    ...SHADOWS.small,
+  },
+  mapButtonText: {
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  sectionContainer: {
     marginBottom: 20,
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    ...SHADOWS.medium,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    ...SHADOWS.light,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   iconContainer: {
-    marginRight: 15,
-  },
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
   },
   cardContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   cardTitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    color: '#757575',
     fontWeight: '600',
     marginBottom: 4,
   },
   cardValue: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
+    fontSize: 15,
+    color: '#333',
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 6,
   },
-  actionButton: {
+  linkButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    gap: 4,
   },
-  actionButtonText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginRight: 4,
+  linkText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   hoursCard: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
-    ...SHADOWS.light,
+    marginBottom: 25,
+    ...SHADOWS.medium,
   },
   hoursHeader: {
     flexDirection: 'row',
@@ -247,39 +295,62 @@ const styles = StyleSheet.create({
   hourRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   day: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: '#555',
     fontWeight: '600',
+  },
+  timeBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   time: {
-    fontSize: 15,
-    color: COLORS.textPrimary,
+    fontSize: 13,
+    color: '#2E7D32',
     fontWeight: '700',
   },
-  connectSection: {
+  socialSection: {
     alignItems: 'center',
   },
-  connectTitle: {
-    fontSize: 16,
+  socialTitle: {
+    fontSize: 14,
+    color: '#999',
     fontWeight: '600',
-    color: COLORS.textSecondary,
     marginBottom: 15,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  socialRow: {
+  socialIcons: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 25,
   },
-  socialIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.white,
+  socialBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.light,
+  },
+  patternDots: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  patternDot: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#fff',
   }
 });
 

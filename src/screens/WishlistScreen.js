@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import BikeCard from '../components/BikeCard';
 import { getWishlist, removeFromWishlist } from '../utils/storage';
+import { COLORS } from '../utils/theme';
 
 const WishlistScreen = ({ navigation }) => {
   const [wishlistIds, setWishlistIds] = useState([]);
@@ -63,7 +64,7 @@ const WishlistScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={styles.loadingText}>Loading wishlist...</Text>
       </View>
     );

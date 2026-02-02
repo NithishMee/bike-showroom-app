@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Dimensions, Image, StatusBar } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Dimensions, Image, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { LinearGradient } from 'expo-linear-gradient';
-import { db } from '../../firebase';
+import { db, auth } from '../../firebase';
 import data from '../../sample-firestore-data.json';
 import BikeCard from '../components/BikeCard';
 import CustomLoader from '../components/CustomLoader';
@@ -22,6 +23,7 @@ const HomeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // Animation Values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -162,6 +164,25 @@ const HomeScreen = ({ navigation }) => {
     return <CustomLoader />;
   }
 
+  // Failsafe: Block access if not verified
+  if (auth.currentUser && !auth.currentUser.emailVerified) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: COLORS.background }}>
+        <Ionicons name="warning" size={60} color={COLORS.error || '#f44336'} />
+        <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 20, textAlign: 'center' }}>Email Not Verified</Text>
+        <Text style={{ textAlign: 'center', marginTop: 10, color: COLORS.textSecondary }}>
+          Please verify your email to access this content.
+        </Text>
+        <TouchableOpacity
+          style={{ marginTop: 30, backgroundColor: COLORS.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 }}
+          onPress={() => signOut(auth)}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   // Render Offer Item
   const renderOfferItem = ({ item }) => (
     <TouchableOpacity activeOpacity={0.9} style={styles.offerCard}>
@@ -199,13 +220,18 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Custom Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome to</Text>
-          <Text style={styles.brandName}>Hero Showroom</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.greeting}>Welcome,</Text>
+          <Text style={styles.brandName} numberOfLines={1}>
+            {auth.currentUser?.displayName || 'Hero User'}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.profileButton}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => setShowProfileMenu(true)}
+        >
           <Image
-            source={{ uri: 'https://ui-avatars.com/api/?name=User&background=EE2824&color=fff' }}
+            source={{ uri: `https://ui-avatars.com/api/?name=${auth.currentUser?.displayName || 'User'}&background=EE2824&color=fff&size=128&length=1` }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
@@ -366,7 +392,47 @@ const HomeScreen = ({ navigation }) => {
           </View>
         }
       />
-    </View>
+
+      {/* Profile Menu Modal */}
+      <Modal
+        visible={showProfileMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowProfileMenu(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowProfileMenu(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.menuContainer}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowProfileMenu(false);
+                    navigation.navigate('Profile');
+                  }}
+                >
+                  <Ionicons name="person-circle-outline" size={24} color={COLORS.textPrimary} />
+                  <Text style={styles.menuText}>My Profile</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowProfileMenu(false);
+                    signOut(auth);
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={24} color={COLORS.error || '#D32F2F'} />
+                  <Text style={[styles.menuText, { color: COLORS.error || '#D32F2F' }]}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View >
   );
 };
 
@@ -384,14 +450,16 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   greeting: {
-    fontSize: SIZES.h4,
+    fontSize: 16,
     color: COLORS.textSecondary,
-    fontFamily: 'System',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   brandName: {
-    fontSize: SIZES.h2,
+    fontSize: 26,
     color: COLORS.textPrimary,
-    fontWeight: '800',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   profileButton: {
     width: 40,
@@ -588,6 +656,37 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: COLORS.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: COLORS.white,
+    width: 200,
+    marginTop: 80, // Offset from top
+    marginRight: 20, // Offset from right
+    borderRadius: 12,
+    ...SHADOWS.medium,
+    paddingVertical: 5,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  menuText: {
+    marginLeft: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
   },
 });
 

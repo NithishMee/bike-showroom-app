@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../utils/theme';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -13,6 +16,9 @@ import OffersScreen from '../screens/OffersScreen';
 import ContactScreen from '../screens/ContactScreen';
 import TestRideBookingScreen from '../screens/TestRideBookingScreen';
 import EnquiryFormScreen from '../screens/EnquiryFormScreen';
+import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -61,30 +67,82 @@ function TabNavigator() {
   );
 }
 
-// Main app navigator with stack
-function AppNavigator() {
+// Auth Stack
+function AuthStack() {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false
       }}
     >
-      <Stack.Screen
-        name="MainTabs"
-        component={TabNavigator}
-      />
-      <Stack.Screen
-        name="BikeDetails"
-        component={BikeDetailsScreen}
-      />
-      <Stack.Screen
-        name="TestRideBooking"
-        component={TestRideBookingScreen}
-      />
-      <Stack.Screen
-        name="EnquiryForm"
-        component={EnquiryFormScreen}
-      />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Main app navigator with stack
+function AppNavigator() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Only set user if email is verified
+      if (user && user.emailVerified) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      {user ? (
+        <>
+          <Stack.Screen
+            name="MainTabs"
+            component={TabNavigator}
+          />
+          <Stack.Screen
+            name="BikeDetails"
+            component={BikeDetailsScreen}
+          />
+          <Stack.Screen
+            name="TestRideBooking"
+            component={TestRideBookingScreen}
+          />
+          <Stack.Screen
+            name="EnquiryForm"
+            component={EnquiryFormScreen}
+          />
+          <Stack.Screen
+            name="Profile"
+            component={ProfileScreen}
+          />
+        </>
+      ) : (
+        <Stack.Screen
+          name="Auth"
+          component={AuthStack}
+        />
+      )}
     </Stack.Navigator>
   );
 }
