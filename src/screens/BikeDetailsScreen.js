@@ -5,12 +5,16 @@ import { getBikeImage } from '../utils/imageMapper';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { db, auth } from '../../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 const { width } = Dimensions.get('window');
 
 const BikeDetailsScreen = ({ route, navigation }) => {
   const { bike } = route.params;
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeImage, setActiveImage] = useState(0);
+  const [isBooked, setIsBooked] = useState(false);
 
   // Animation for header
   const headerOpacity = scrollY.interpolate({
@@ -24,6 +28,37 @@ const BikeDetailsScreen = ({ route, navigation }) => {
     outputRange: [1.2, 1],
     extrapolate: 'clamp',
   });
+
+  // Check if user has already booked this bike
+  React.useEffect(() => {
+    const checkBookingStatus = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const q = query(
+          collection(db, 'testRides'),
+          where('userId', '==', user.uid),
+          where('bikeName', '==', bike.name)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          setIsBooked(true);
+        }
+      } catch (error) {
+        console.error("Error checking booking status:", error);
+      }
+    };
+
+    // Check immediately and also add a listener/refresh logic if needed
+    // For now, we check on mount. If we come back from booking screen, we might need value update.
+    const unsubscribe = navigation.addListener('focus', () => {
+      checkBookingStatus();
+    });
+
+    return unsubscribe;
+  }, [navigation, bike.name]);
 
   // Ensure images is an array
   const bikeImages = bike.images || (bike.image ? [bike.image] : []);
@@ -138,16 +173,30 @@ const BikeDetailsScreen = ({ route, navigation }) => {
           </View>
 
           {/* Action Buttons */}
-          <TouchableOpacity style={styles.bookButton}>
-            <LinearGradient
-              colors={COLORS.primaryGradient}
-              style={styles.gradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={styles.bookButtonText}>Book Test Ride</Text>
-              <Ionicons name="arrow-forward" size={20} color={COLORS.white} />
-            </LinearGradient>
+          <TouchableOpacity
+            style={[styles.bookButton, isBooked && styles.bookButtonDisabled]}
+            disabled={isBooked}
+            onPress={() => navigation.navigate('TestRideBooking', {
+              bikeName: bike.name,
+              bikeImage: bike.images && bike.images.length > 0 ? bike.images[0] : bike.image
+            })}
+          >
+            {isBooked ? (
+              <View style={styles.disabledButtonContent}>
+                <Text style={styles.bookButtonTextDisabled}>Booked</Text>
+                <Ionicons name="checkmark-circle" size={20} color={COLORS.textSecondary} />
+              </View>
+            ) : (
+              <LinearGradient
+                colors={COLORS.primaryGradient}
+                style={styles.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.bookButtonText}>Book Test Ride</Text>
+                <Ionicons name="arrow-forward" size={20} color={COLORS.white} />
+              </LinearGradient>
+            )}
           </TouchableOpacity>
         </View>
       </Animated.ScrollView>
@@ -320,6 +369,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.white,
+    marginRight: 10,
+  },
+  bookButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  disabledButtonContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookButtonTextDisabled: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.textSecondary,
     marginRight: 10,
   },
 });

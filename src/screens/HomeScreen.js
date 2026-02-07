@@ -18,13 +18,11 @@ const CATEGORIES = ['All', 'Motorcycles', 'Scooters', 'Premium'];
 const HomeScreen = ({ navigation }) => {
   const [bikes, setBikes] = useState([]);
   const [filteredBikes, setFilteredBikes] = useState([]);
-  const [offers, setOffers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
   // Animation Values
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerHeight = scrollY.interpolate({
@@ -112,30 +110,19 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // Fetch bikes and offers from Firestore
+  // Fetch bikes from Firestore
   const fetchBikes = async () => {
     try {
       const bikesCollection = collection(db, 'bikes');
-      const offersCollection = collection(db, 'offers');
-
-      const [bikesSnapshot, offersSnapshot] = await Promise.all([
-        getDocs(bikesCollection),
-        getDocs(offersCollection)
-      ]);
+      const bikesSnapshot = await getDocs(bikesCollection);
 
       const bikesList = bikesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
-      const offersList = offersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
       setBikes(bikesList);
       setFilteredBikes(bikesList);
-      setOffers(offersList);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -265,68 +252,6 @@ const HomeScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
-            {/* Exclusive Offers Carousel */}
-            {offers.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Exclusive Offers</Text>
-
-                <View style={styles.carouselContainer}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.carouselContent}
-                    decelerationRate="fast"
-                    snapToInterval={width * 0.7 + 16}
-                    snapToAlignment="center"
-                  >
-                    {offers.map((item, index) => (
-                      <TouchableOpacity key={index} activeOpacity={0.95} style={styles.heroOfferCard}>
-                        <LinearGradient
-                          colors={index % 2 === 0 ? ['#E53935', '#B71C1C'] : ['#1E88E5', '#0D47A1']} // Alternating gradients
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.heroGradient}
-                        >
-                          {/* Background Pattern */}
-                          <View style={styles.patternDots}>
-                            {[...Array(20)].map((_, i) => (
-                              <View key={i} style={[styles.patternDot, { left: Math.random() * 300, top: Math.random() * 150, opacity: Math.random() * 0.3 }]} />
-                            ))}
-                          </View>
-
-                          <View style={styles.heroContent}>
-                            <View style={styles.heroHeader}>
-                              <View style={styles.heroBadge}>
-                                <Text style={styles.heroBadgeText}>Limited Deal</Text>
-                              </View>
-                              <Text style={styles.heroValid}>{item.validUntil === 'Always On' ? 'Always Active' : `Ends ${item.validUntil}`}</Text>
-                            </View>
-
-                            <Text style={styles.heroTitle}>{item.title}</Text>
-                            <Text style={styles.heroDiscount}>{item.discount}</Text>
-                            <Text style={styles.heroDesc} numberOfLines={2}>{item.description}</Text>
-
-                            <View style={styles.heroButton}>
-                              <Text style={styles.heroButtonText}>Check Offer</Text>
-                              <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
-                            </View>
-                          </View>
-
-                          {/* Hero Icon */}
-                          <Ionicons
-                            name={index % 2 === 0 ? "gift" : "trophy"}
-                            size={140}
-                            color="rgba(255,255,255,0.15)"
-                            style={styles.heroIconBg}
-                          />
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              </View>
-            )}
-
             {/* Categories */}
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Categories</Text>

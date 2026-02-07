@@ -48,10 +48,11 @@ const CompareScreen = ({ navigation }) => {
   const handleBikeSelect = (bike) => {
     if (selectedBikes.find(b => b.id === bike.id)) {
       setSelectedBikes(selectedBikes.filter(b => b.id !== bike.id));
-    } else if (selectedBikes.length < 2) {
+    } else if (selectedBikes.length < 3) {
       setSelectedBikes([...selectedBikes, bike]);
     } else {
-      setSelectedBikes([selectedBikes[1], bike]);
+      // Replace the first one (FIFO) or maybe prompt? Let's just shift
+      setSelectedBikes([...selectedBikes.slice(1), bike]);
     }
   };
 
@@ -66,44 +67,63 @@ const CompareScreen = ({ navigation }) => {
     return parseFloat(val.toString().replace(/[^0-9.]/g, '')) || 0;
   };
 
-  const renderComparisonRow = (label, val1, val2, unit = '') => {
-    const num1 = parseValue(val1);
-    const num2 = parseValue(val2);
-    const max = Math.max(num1, num2) || 1;
-    const pct1 = (num1 / max) * 100;
-    const pct2 = (num2 / max) * 100;
+  const renderComparisonRow = (label, bikeKey, unit = '') => {
+    // Extract values
+    const values = [0, 1, 2].map(i => {
+      const bike = selectedBikes[i];
+      if (!bike) return null;
+      return bike[bikeKey];
+    });
 
-    // Determine 'winner' for color highlight (lower price is better? usually higher stats is better, let's assume higher is better for specs, lower for price)
+    const parsedValues = values.map(v => parseValue(v));
+    const max = Math.min(Math.max(...parsedValues.filter(v => v !== 0)) || 1, 9999999);
+
+    // Determine winner (highest value is better, unless price)
     const isPrice = label === 'Price';
-    const better1 = isPrice ? num1 < num2 : num1 > num2;
-    const better2 = isPrice ? num2 < num1 : num2 > num1;
+
+    let bestIndex = -1;
+    let bestVal = isPrice ? Infinity : -Infinity;
+
+    parsedValues.forEach((val, idx) => {
+      if (values[idx] === null || values[idx] === undefined || val === 0) return;
+      if (isPrice) {
+        if (val < bestVal) { bestVal = val; bestIndex = idx; }
+      } else {
+        if (val > bestVal) { bestVal = val; bestIndex = idx; }
+      }
+    });
 
     return (
-      <View style={styles.statRow}>
-        <Text style={styles.statLabel}>{label}</Text>
+      <View style={styles.specCard}>
+        <Text style={styles.specCardTitle}>{label}</Text>
+        <View style={styles.specGrid}>
+          {[0, 1, 2].map((i) => {
+            const bike = selectedBikes[i];
+            const val = values[i];
+            const parsed = parsedValues[i];
+            const pct = parsed ? (parsed / max) * 100 : 0;
+            const isWinner = i === bestIndex && bike && val;
 
-        <View style={styles.statComparison}>
-          {/* Left Side (Bike 1) */}
-          <View style={styles.statSideLeft}>
-            <Text style={[styles.statValue, better1 && styles.winningText]}>
-              {val1 ? (isPrice ? `₹${Number(val1).toLocaleString()}` : `${val1}${unit ? '' : ''}`) : '-'}
-            </Text>
-            <View style={styles.barContainerLeft}>
-              <View style={[styles.barFill, { width: `${pct1}%`, backgroundColor: better1 ? COLORS.primary : COLORS.border }]} />
-            </View>
-          </View>
+            return (
+              <View key={i} style={[styles.specCol, i < 2 && styles.specDivider]}>
+                <View style={{ alignItems: 'center', width: '100%' }}>
+                  {isWinner && (
+                    <Ionicons name="trophy" size={14} color="#FFD700" style={{ marginBottom: 4 }} />
+                  )}
+                  <Text style={[styles.specValue, isWinner && { color: COLORS.primary, fontWeight: '800' }]}>
+                    {val ? (isPrice ? `₹${Number(val).toLocaleString()}` : `${val}${unit}`) : '-'}
+                  </Text>
 
-          <View style={styles.divider} />
-
-          {/* Right Side (Bike 2) */}
-          <View style={styles.statSideRight}>
-            <Text style={[styles.statValue, better2 && styles.winningText]}>
-              {val2 ? (isPrice ? `₹${Number(val2).toLocaleString()}` : `${val2}${unit ? '' : ''}`) : '-'}
-            </Text>
-            <View style={styles.barContainerRight}>
-              <View style={[styles.barFill, { width: `${pct2}%`, backgroundColor: better2 ? COLORS.primary : COLORS.border }]} />
-            </View>
-          </View>
+                  {/* Mini Bar Chart */}
+                  {val ? (
+                    <View style={{ width: '80%', height: 4, backgroundColor: '#F0F0F0', borderRadius: 2, marginTop: 6 }}>
+                      <View style={{ width: `${Math.min(pct, 100)}%`, height: '100%', backgroundColor: isWinner ? COLORS.primary : '#ccc', borderRadius: 2 }} />
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            );
+          })}
         </View>
       </View>
     );
@@ -140,63 +160,47 @@ const CompareScreen = ({ navigation }) => {
       </LinearGradient>
 
       <View style={styles.mainContent}>
-        {/* Floating VS Display */}
+        {/* Floating Comparison Header */}
         <View style={styles.vsFloatingCard}>
           <View style={styles.fighterContainer}>
-            {/* Fighter 1 */}
-            <View style={styles.fighter}>
-              {selectedBikes[0] ? (
-                <TouchableOpacity onPress={() => handleBikeSelect(selectedBikes[0])} activeOpacity={0.8}>
-                  <Image
-                    source={selectedBikes[0].images?.length > 0 ? getBikeImage(selectedBikes[0].images[0]) : null}
-                    style={styles.fighterImage}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.fighterName} numberOfLines={1}>{selectedBikes[0].name}</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.addSlot}>
-                  <Ionicons name="add" size={30} color={COLORS.textLight} />
-                  <Text style={styles.addText}>Add Bike</Text>
+            {[0, 1, 2].map((index) => {
+              const bike = selectedBikes[index];
+              return (
+                <View key={index} style={styles.fighter}>
+                  {bike ? (
+                    <TouchableOpacity onPress={() => handleBikeSelect(bike)} activeOpacity={0.8} style={styles.fighterTouch}>
+                      <View style={styles.removeBadge}>
+                        <Ionicons name="close" size={12} color="#FFF" />
+                      </View>
+                      <Image
+                        source={bike.images?.length > 0 ? getBikeImage(bike.images[0]) : null}
+                        style={styles.fighterImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.fighterName} numberOfLines={2}>{bike.name}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.addSlot}>
+                      <Ionicons name="add" size={24} color={COLORS.textLight} />
+                      <Text style={styles.addText}>Add</Text>
+                    </View>
+                  )}
+                  {index < 2 && <View style={styles.verticalDivider} />}
                 </View>
-              )}
-            </View>
-
-            {/* VS Badge */}
-            <View style={styles.vsBadge}>
-              <Text style={styles.vsText}>VS</Text>
-            </View>
-
-            {/* Fighter 2 */}
-            <View style={styles.fighter}>
-              {selectedBikes[1] ? (
-                <TouchableOpacity onPress={() => handleBikeSelect(selectedBikes[1])} activeOpacity={0.8}>
-                  <Image
-                    source={selectedBikes[1].images?.length > 0 ? getBikeImage(selectedBikes[1].images[0]) : null}
-                    style={styles.fighterImage}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.fighterName} numberOfLines={1}>{selectedBikes[1].name}</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.addSlot}>
-                  <Ionicons name="add" size={30} color={COLORS.textLight} />
-                  <Text style={styles.addText}>Add Bike</Text>
-                </View>
-              )}
-            </View>
+              );
+            })}
           </View>
         </View>
 
         {/* Comparison Stats */}
-        <ScrollView style={styles.scrollContent} contentContainerStyle={{ paddingBottom: 200, paddingTop: 60 }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollContent} contentContainerStyle={{ paddingBottom: 200, paddingTop: 20 }} showsVerticalScrollIndicator={false}>
           {selectedBikes.length > 0 ? (
             <View>
               {/* Core Stats */}
               <Text style={styles.sectionHeader}>Performance</Text>
-              {renderComparisonRow('Price', selectedBikes[0]?.price, selectedBikes[1]?.price)}
-              {renderComparisonRow('Engine', selectedBikes[0]?.engineCC, selectedBikes[1]?.engineCC, ' cc')}
-              {renderComparisonRow('Mileage', selectedBikes[0]?.mileage, selectedBikes[1]?.mileage, ' kmpl')}
+              {renderComparisonRow('Price', 'price')}
+              {renderComparisonRow('Engine', 'engineCC', ' cc')}
+              {renderComparisonRow('Mileage', 'mileage', ' kmpl')}
 
               {/* Dynamic Specs from JSON */}
               <View style={{ marginTop: 20 }}>
@@ -207,18 +211,27 @@ const CompareScreen = ({ navigation }) => {
                   ...(selectedBikes[0]?.specs?.map(s => s.key) || []),
                   ...(selectedBikes[1]?.specs?.map(s => s.key) || [])
                 ])).map((specKey, index) => {
-                  // Check if it's already covered in Core Stats (Power/Weight sometimes duplicate if keys match)
-                  const val1 = selectedBikes[0]?.specs?.find(s => s.key === specKey)?.value || '-';
-                  const val2 = selectedBikes[1]?.specs?.find(s => s.key === specKey)?.value || '-';
-
                   // Simple row for non-numeric or mixed text specs
                   return (
-                    <View key={index} style={styles.simpleRow}>
-                      <Text style={styles.simpleLabel}>{specKey}</Text>
-                      <View style={styles.simpleValues}>
-                        <Text style={styles.simpleVal}>{val1}</Text>
-                        <View style={styles.verticalLine} />
-                        <Text style={styles.simpleVal}>{val2}</Text>
+                    <View key={index} style={styles.specCard}>
+                      <Text style={styles.specCardTitle}>{specKey}</Text>
+                      <View style={styles.specGrid}>
+                        {[0, 1, 2].map((i) => {
+                          const bike = selectedBikes[i];
+                          const val = bike?.specs?.find(s => s.key === specKey)?.value || '-';
+
+                          // Skip rendering empty slot if no bike selected? No, keep it aligned.
+                          // But visually we might want to hide columns if only 2 bikes.
+                          // For now, render all 3 slots to keep alignment if 3rd is empty.
+
+                          return (
+                            <View key={i} style={[styles.specCol, i < 2 && styles.specDivider]}>
+                              <Text style={[styles.specValue, !bike && { opacity: 0.3 }]} numberOfLines={2}>
+                                {val}
+                              </Text>
+                            </View>
+                          );
+                        })}
                       </View>
                     </View>
                   );
@@ -327,18 +340,19 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 5,
   },
   fighterImage: {
-    width: 120,
-    height: 90,
-    marginBottom: 10,
+    width: '100%',
+    height: 80,
+    marginBottom: 8,
   },
   fighterName: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',
     color: COLORS.textPrimary,
-    paddingHorizontal: 5,
+    paddingHorizontal: 2,
   },
   addSlot: {
     width: 70,
@@ -393,49 +407,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  statComparison: {
+  statGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  statSideLeft: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  statSideRight: {
-    flex: 1,
     alignItems: 'flex-end',
   },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#EEE',
-    marginHorizontal: 15,
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 2,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: 6,
+    textAlign: 'center',
   },
   winningText: {
     color: COLORS.primary,
+    fontWeight: '800',
   },
-  barContainerLeft: {
+  barContainer: {
     width: '100%',
     height: 6,
     backgroundColor: '#F0F0F0',
     borderRadius: 3,
-    flexDirection: 'row', // Default LTR, ok for this side? No, LTR fill is fine.
-    overflow: 'hidden',
-  },
-  barContainerRight: {
-    width: '100%',
-    height: 6,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 3,
-    flexDirection: 'row-reverse', // Fill from right
-    overflow: 'hidden',
+    flexDirection: 'column-reverse', // Grow upwards? No, horizontal bar.
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start', // Left align for all? 
+    // Actually, for 3 cols, maybe vertical bars? 
+    // The previous implementation used horizontal bars.
+    // Let's stick to horizontal for now, but maybe centered?
+    // If it's 3 columns side-by-side, max width is small (~100px).
+    // Let's make it simple: Horizontal fill.
+    flexDirection: 'row',
   },
   barFill: {
     height: '100%',
@@ -448,37 +454,40 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   simpleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column', // Stack label on top or keep row? row is tight.
+    // Let's keep row but give label full width? No.
+    // Let's stack: Label Top, Values Bottom Row.
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
     backgroundColor: COLORS.white,
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
   },
   simpleLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: COLORS.textSecondary,
-    width: 80,
+    marginBottom: 8,
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
   simpleValues: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', // Center vertically
+    alignItems: 'center',
   },
-  verticalLine: {
-    width: 1,
-    height: '80%',
-    backgroundColor: '#EEE',
-    marginHorizontal: 10,
+  simpleValContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 0.5,
+    borderRightColor: '#EEE',
   },
   simpleVal: {
     fontSize: 13,
     fontWeight: '600',
     color: COLORS.textPrimary,
-    flex: 1,
     textAlign: 'center',
   },
   emptyState: {
@@ -542,7 +551,69 @@ const styles = StyleSheet.create({
   railNameActive: {
     color: COLORS.primary,
     fontWeight: '700',
-  }
+  },
+  fighterTouch: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  removeBadge: {
+    position: 'absolute',
+    top: -5,
+    right: 15,
+    backgroundColor: COLORS.textLight,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  verticalDivider: {
+    width: 1,
+    height: '60%',
+    backgroundColor: '#EEE',
+    position: 'absolute',
+    right: 0,
+  },
+  specCard: {
+    backgroundColor: COLORS.white,
+    padding: 15,
+    borderRadius: 16,
+    marginBottom: 10,
+    ...SHADOWS.light,
+  },
+  specCardTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#888',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  specGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  specCol: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 2,
+    justifyContent: 'center',
+  },
+  specDivider: {
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
+  },
+  specValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });
 
 export default CompareScreen;

@@ -41,68 +41,44 @@ const OffersScreen = () => {
   }
 
   const renderOfferCard = ({ item, index }) => {
-    const isEven = index % 2 === 0;
     return (
-      <TouchableOpacity activeOpacity={0.9} style={styles.offerCard}>
-        {/* Top Section: Image & Badge */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={item.image ? { uri: item.image } : { uri: 'https://via.placeholder.com/600x300' }}
-            style={styles.offerImage}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.7)']}
-            style={styles.imageOverlay}
-          />
-          <View style={styles.badgeContainer}>
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagText}>LIMITED TIME</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Content Section */}
-        <View style={styles.contentContainer}>
-          <View style={styles.detailsRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.offerTitle}>{item.title}</Text>
-              <Text style={styles.offerDesc} numberOfLines={2}>{item.description}</Text>
-            </View>
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountValue}>{item.discount?.split(' ')[0]}</Text>
-              <Text style={styles.discountLabel}>OFF</Text>
-            </View>
-          </View>
-
-          {/* Dashed Divider */}
-          <View style={styles.dashedDivider}>
+      <TouchableOpacity activeOpacity={0.95} style={styles.heroOfferCard}>
+        <LinearGradient
+          colors={index % 2 === 0 ? ['#E53935', '#B71C1C'] : ['#1E88E5', '#0D47A1']} // Alternating gradients
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroGradient}
+        >
+          {/* Background Pattern */}
+          <View style={styles.patternDots}>
             {[...Array(20)].map((_, i) => (
-              <View key={i} style={styles.dash} />
+              <View key={i} style={[styles.patternDot, { left: Math.random() * 300, top: Math.random() * 150, opacity: Math.random() * 0.3 }]} />
             ))}
           </View>
 
-          <View style={styles.footerRow}>
-            <View style={styles.validityContainer}>
-              <Ionicons name="calendar-outline" size={14} color="#666" />
-              <Text style={styles.validityText}>Valid until: {item.validUntil || '31 Mar 2026'}</Text>
+          <View style={styles.heroContent}>
+            <View style={styles.heroHeader}>
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>Limited Deal</Text>
+              </View>
+              <Text style={styles.heroValid}>{item.validUntil === 'Always On' ? 'Always Active' : `Ends ${item.validUntil}`}</Text>
             </View>
-            <TouchableOpacity style={styles.claimButton}>
-              <LinearGradient
-                colors={[COLORS.primary, '#D32F2F']}
-                style={styles.claimButtonGradient}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.claimText}>CLAIM OFFER</Text>
-                <Ionicons name="arrow-forward" size={14} color="#fff" />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Punch Holes for Coupon Effect */}
-        <View style={[styles.punchHole, styles.punchLeft]} />
-        <View style={[styles.punchHole, styles.punchRight]} />
+            <Text style={styles.heroTitle}>{item.title}</Text>
+            <Text style={styles.heroDiscount}>{item.discount}</Text>
+            <Text style={styles.heroDesc} numberOfLines={2}>{item.description}</Text>
+
+
+          </View>
+
+          {/* Hero Icon */}
+          <Ionicons
+            name={index % 2 === 0 ? "gift" : "trophy"}
+            size={140}
+            color="rgba(255,255,255,0.15)"
+            style={styles.heroIconBg}
+          />
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -112,26 +88,7 @@ const OffersScreen = () => {
       <StatusBar barStyle="light-content" />
 
       {/* Premium Red Gradient Header */}
-      <View style={styles.headerContainer}>
-        <LinearGradient
-          colors={['#B71C1C', '#D32F2F', '#E53935']}
-          style={styles.headerGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.patternDots}>
-            {[...Array(15)].map((_, i) => (
-              <View key={i} style={[styles.patternDot, { left: Math.random() * width, top: Math.random() * 100, opacity: Math.random() * 0.4 }]} />
-            ))}
-          </View>
-
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Exclusive Offers</Text>
-            <Text style={styles.headerSubtitle}>Best deals curated for you</Text>
-          </View>
-        </LinearGradient>
-        <View style={styles.curveMask} />
-      </View>
+      <View style={{ height: 20 }} />
 
       {offers.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -166,12 +123,15 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: 20,
-  },
-  headerGradient: {
-    paddingTop: 50,
-    paddingBottom: 40, // Compact height
+    backgroundColor: COLORS.primary, // Fallback
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,153 +152,119 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
-    marginTop: -20, // Overlap header slightly
+    paddingBottom: 40,
   },
-  offerCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
+  // New Hero Card Styles
+  heroOfferCard: {
+    width: '100%',
+    height: 240, // Fixed height for uniformity
     marginBottom: 20,
-    ...SHADOWS.medium,
-    overflow: 'hidden', // Important for image
-    position: 'relative',
-  },
-  imageContainer: {
-    height: 150,
-    width: '100%',
-    position: 'relative',
-  },
-  offerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  badgeContainer: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-  },
-  tagBadge: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
-    ...SHADOWS.small,
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-    color: COLORS.primary,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 15,
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 15,
-  },
-  offerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6,
-  },
-  offerDesc: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-  discountBadge: {
-    backgroundColor: '#FFF8E1',
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFECB3',
-    marginLeft: 10,
-  },
-  discountValue: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FF8F00',
-  },
-  discountLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#FF8F00',
-  },
-  dashedDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    borderRadius: 24,
     overflow: 'hidden',
-    marginBottom: 15,
-    opacity: 0.3,
+    ...SHADOWS.medium,
+    elevation: 5,
   },
-  dash: {
-    width: 8,
-    height: 1,
-    backgroundColor: '#000',
+  heroGradient: {
+    flex: 1,
+    padding: 24,
+    position: 'relative',
+    justifyContent: 'center',
   },
-  footerRow: {
+  heroContent: {
+    zIndex: 2,
+    flex: 1,
+    justifyContent: 'flex-start', // Avoid pushing text to edge
+  },
+  heroHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  validityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F5F5F5',
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
   },
-  validityText: {
+  heroBadgeText: {
+    color: COLORS.white,
     fontSize: 11,
-    color: '#666',
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  heroValid: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
     fontWeight: '600',
   },
-  claimButton: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    ...SHADOWS.light,
+  heroTitle: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: '700',
+    marginBottom: 2,
+    marginTop: 10,
+    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
-  claimButtonGradient: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  heroDiscount: {
+    fontSize: 36,
+    color: '#fff',
+    fontWeight: '900',
+    letterSpacing: -1,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 8,
+    marginBottom: 5,
+  },
+  heroDesc: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.95)',
+    maxWidth: '85%',
+    lineHeight: 20,
+    marginBottom: 15, // Space at bottom
+  },
+  heroButton: {
+    backgroundColor: COLORS.white,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 30,
+    alignSelf: 'flex-start',
+    marginTop: 10, // Ensure spacing from description
+    ...SHADOWS.light,
   },
-  claimText: {
-    color: COLORS.white,
-    fontSize: 12,
+  heroButtonText: {
+    color: COLORS.primary,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
+    marginRight: 8,
+    fontSize: 13,
   },
-  // Decoration
-  punchHole: {
+  heroIconBg: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F7', // Match screen background invisible look
-    top: 140, // Position at intersection of image and content approx
-    zIndex: 10,
+    right: -20,
+    bottom: -30,
+    transform: [{ rotate: '-15deg' }],
+    opacity: 0.9,
   },
-  punchLeft: {
-    left: -12,
+  patternDots: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.4,
   },
-  punchRight: {
-    right: -12,
+  headerPatternDots: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.3,
+  },
+  patternDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
   },
   emptyContainer: {
     flex: 1,
@@ -367,20 +293,6 @@ const styles = StyleSheet.create({
     width: '70%',
     lineHeight: 20,
   },
-  patternDots: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  patternDot: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#fff',
-  }
 });
 
 export default OffersScreen;
