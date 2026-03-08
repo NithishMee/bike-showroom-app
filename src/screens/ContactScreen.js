@@ -24,9 +24,9 @@ const ContactScreen = () => {
     ]).start();
   }, []);
 
-  const showroomAddress = "123 Main Street, City Center, Mumbai - 400001";
-  const phoneNumber = "+919876543210";
-  const email = "info@bikeshowroom.com";
+  const showroomAddress = "RPT Motors,\nSankagiri Main Road, Ottamethai,\nPallipalayam - 638006";
+  const phoneNumber = "+91 9443262624"; // Using one of the provided mobiles as primary
+  const email = "rptmotors@gmail.com";
 
   const handleCall = () => {
     Linking.openURL(`tel:${phoneNumber}`);
@@ -139,16 +139,7 @@ const ContactScreen = () => {
           />
         </View>
 
-        {/* Map Preview */}
-        <Text style={[styles.sectionTitle, { marginTop: 30, marginBottom: 15 }]}>LOCATION</Text>
-        <View style={styles.mapContainer}>
-          <TouchableOpacity style={styles.mapTouch} onPress={handleOpenMaps} activeOpacity={0.9}>
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="map" size={32} color="#8E8E93" />
-              <Text style={styles.mapText}>View on Map</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+
 
         {/* Business Hours */}
         <View style={styles.hoursContainer}>

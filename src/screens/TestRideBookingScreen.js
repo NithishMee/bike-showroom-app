@@ -343,6 +343,32 @@ const TestRideBookingScreen = ({ route, navigation }) => {
             {TIME_SLOTS.map((slot, index) => {
               const isSelected = selectedTimeSlot === slot;
               const isBooked = bookedSlots.includes(slot);
+              
+              // Check if the slot has passed for today
+              let isPassed = false;
+              if (selectedDate && selectedDate.id === 0) { // id 0 is today
+                 // Parse the end time of the slot (e.g., "11:00 AM", "01:00 PM")
+                 const endTimeStr = slot.split(" - ")[1];
+                 const [time, modifier] = endTimeStr.split(" ");
+                 let [hours, minutes] = time.split(":");
+                 hours = parseInt(hours, 10);
+                 if (hours === 12) {
+                    hours = modifier === "AM" ? 0 : 12;
+                 } else if (modifier === "PM") {
+                    hours += 12;
+                 }
+                 minutes = parseInt(minutes, 10);
+                 
+                 const now = new Date();
+                 const slotEndTime = new Date(selectedDate.rawDate);
+                 slotEndTime.setHours(hours, minutes, 0, 0);
+
+                 isPassed = now > slotEndTime;
+              }
+
+              if (isPassed) {
+                  return null; // Don't render passed slots
+              }
 
               return (
                 <TouchableOpacity

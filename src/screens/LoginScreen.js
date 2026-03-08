@@ -131,7 +131,7 @@ const LoginScreen = ({ navigation, route }) => {
                                     resizeMode="contain"
                                 />
                             </View>
-                            <Text style={styles.welcomeText}>Welcome Back</Text>
+                            <Text style={styles.welcomeText}>RPT Motors</Text>
                             <Text style={styles.subtitleText}>Sign in to your account</Text>
                         </View>
                     </LinearGradient>
@@ -277,10 +277,13 @@ const styles = StyleSheet.create({
         height: 50,
     },
     welcomeText: {
-        fontSize: 26,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'sans-serif-condensed',
+        letterSpacing: 2,
         color: COLORS.white,
         marginBottom: 5,
+        textTransform: 'uppercase',
     },
     subtitleText: {
         fontSize: 16,
