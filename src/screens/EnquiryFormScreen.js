@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Platform, KeyboardAvoidingView, StatusBar, ActivityIndicator } from 'react-native';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 
 const EnquiryFormScreen = ({ route, navigation }) => {
   const { bikeName } = route.params || {};
@@ -10,26 +11,27 @@ const EnquiryFormScreen = ({ route, navigation }) => {
   const [phone, setPhone] = useState('');
   const [bikeNameInput, setBikeNameInput] = useState(bikeName || '');
   const [loading, setLoading] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(null);
 
   const handleSubmit = async () => {
     // Validation
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
+      Alert.alert('Required', 'Please enter your name');
       return;
     }
     if (!phone.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
+      Alert.alert('Required', 'Please enter your phone number');
       return;
     }
     if (!bikeNameInput.trim()) {
-      Alert.alert('Error', 'Please enter bike name');
+      Alert.alert('Required', 'Please enter the bike model');
       return;
     }
 
     // Phone validation (basic)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phone.trim())) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      Alert.alert('Invalid Phone', 'Please enter a valid 10-digit phone number');
       return;
     }
 
@@ -40,14 +42,15 @@ const EnquiryFormScreen = ({ route, navigation }) => {
         phone: phone.trim(),
         bikeName: bikeNameInput.trim(),
         createdAt: new Date(),
+        status: 'new'
       });
 
       Alert.alert(
-        'Success',
-        'Enquiry submitted successfully! We will contact you soon.',
+        'Request Sent',
+        'We have received your enquiry. Our team will contact you shortly.',
         [
           {
-            text: 'OK',
+            text: 'Done',
             onPress: () => {
               setName('');
               setPhone('');
@@ -59,140 +62,212 @@ const EnquiryFormScreen = ({ route, navigation }) => {
       );
     } catch (error) {
       console.error('Error submitting enquiry:', error);
-      Alert.alert('Error', 'Failed to submit enquiry. Please try again.');
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Ionicons name="mail-outline" size={48} color="#007AFF" />
-          <Text style={styles.title}>Enquiry Form</Text>
-          <Text style={styles.subtitle}>Fill in your details and we'll get back to you</Text>
-        </View>
+  const InputField = ({ label, placeholder, value, onChangeText, keyboardType, maxLength, fieldName }) => (
+    <View style={styles.inputGroup}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <TextInput
+        style={[
+          styles.inputField,
+          focusedInput === fieldName && styles.inputFocused
+        ]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#aaa"
+        keyboardType={keyboardType}
+        maxLength={maxLength}
+        onFocus={() => setFocusedInput(fieldName)}
+        onBlur={() => setFocusedInput(null)}
+      />
+    </View>
+  );
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your name"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#999"
-            />
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+      {/* Minimalist Navbar */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>New Enquiry</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          style={styles.formScroll}
+          contentContainerStyle={styles.formContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.mainHeading}>Let's get started</Text>
+            <Text style={styles.subHeading}>Fill in the details below and we will get back to you with the best offers.</Text>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Phone Number *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 10-digit phone number"
+          <View style={styles.formContainer}>
+            <InputField
+              label="FULL NAME"
+              placeholder="Enter your full name"
+              value={name}
+              onChangeText={setName}
+              fieldName="name"
+            />
+
+            <InputField
+              label="MOBILE NUMBER"
+              placeholder="10-digit mobile number"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
               maxLength={10}
-              placeholderTextColor="#999"
+              fieldName="phone"
             />
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Bike Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter bike name"
+            <InputField
+              label="INTERESTED MODEL"
+              placeholder="e.g. Splendor Plus"
               value={bikeNameInput}
               onChangeText={setBikeNameInput}
-              placeholderTextColor="#999"
+              fieldName="bike"
             />
-          </View>
 
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.submitButtonText}>
-              {loading ? 'Submitting...' : 'Submit Enquiry'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Submit Enquiry</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.securityNote}>
+              <Ionicons name="lock-closed-outline" size={14} color="#888" />
+              <Text style={styles.securityText}>Your information is secure with us.</Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF',
   },
-  content: {
-    padding: 16,
-  },
-  header: {
+  navbar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  form: {
+    justifyContent: 'space-between',
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  inputContainer: {
-    marginBottom: 20,
+  backBtn: {
+    padding: 4,
   },
-  label: {
+  navTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#000',
+  },
+  formScroll: {
+    flex: 1,
+  },
+  formContent: {
+    padding: 24,
+  },
+  headerTextContainer: {
+    marginBottom: 32,
+  },
+  mainHeading: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#000',
     marginBottom: 8,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+  subHeading: {
+    fontSize: 15,
+    color: '#666',
+    lineHeight: 22,
+  },
+  formContainer: {
+    gap: 24,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333',
+    letterSpacing: 0.5,
+  },
+  inputField: {
+    backgroundColor: '#F5F5F7',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: 16,
     color: '#000',
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputFocused: {
+    backgroundColor: '#FFF',
+    borderColor: '#000',
+    ...SHADOWS.light,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: '#000',
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    paddingVertical: 18,
+    borderRadius: 16,
+    marginTop: 16,
+    ...SHADOWS.medium,
   },
   submitButtonDisabled: {
     backgroundColor: '#ccc',
+    shadowOpacity: 0,
   },
   submitButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  securityText: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: '500',
+  }
 });
 
 export default EnquiryFormScreen;
