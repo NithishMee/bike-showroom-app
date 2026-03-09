@@ -347,9 +347,9 @@ const TestRideBookingScreen = ({ route, navigation }) => {
               // Check if the slot has passed for today
               let isPassed = false;
               if (selectedDate && selectedDate.id === 0) { // id 0 is today
-                 // Parse the end time of the slot (e.g., "11:00 AM", "01:00 PM")
-                 const endTimeStr = slot.split(" - ")[1];
-                 const [time, modifier] = endTimeStr.split(" ");
+                 // Parse the start time of the slot (e.g., "09:00 AM", "01:00 PM")
+                 const startTimeStr = slot.split(" - ")[0];
+                 const [time, modifier] = startTimeStr.split(" ");
                  let [hours, minutes] = time.split(":");
                  hours = parseInt(hours, 10);
                  if (hours === 12) {
@@ -360,10 +360,10 @@ const TestRideBookingScreen = ({ route, navigation }) => {
                  minutes = parseInt(minutes, 10);
                  
                  const now = new Date();
-                 const slotEndTime = new Date(selectedDate.rawDate);
-                 slotEndTime.setHours(hours, minutes, 0, 0);
+                 const slotStartTime = new Date(selectedDate.rawDate);
+                 slotStartTime.setHours(hours, minutes, 0, 0);
 
-                 isPassed = now > slotEndTime;
+                 isPassed = now > slotStartTime;
               }
 
               if (isPassed) {

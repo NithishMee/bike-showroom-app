@@ -43,9 +43,45 @@ const BikeDetailsScreen = ({ route, navigation }) => {
         );
 
         const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          setIsBooked(true);
-        }
+        let hasActiveBooking = false;
+        
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!data.preferredDate) return;
+
+          // Parse preferredDate "DD/MM/YYYY"
+          const [day, month, year] = data.preferredDate.split('/');
+          
+          let endHour = 23;
+          let endMinute = 59;
+          
+          if (data.preferredTime) {
+             try {
+                // e.g. "09:00 AM - 11:00 AM"
+                const endTimeStr = data.preferredTime.split(" - ")[1];
+                const [time, modifier] = endTimeStr.split(" ");
+                let [hours, minutes] = time.split(":");
+                hours = parseInt(hours, 10);
+                if (hours === 12) {
+                   hours = modifier === "AM" ? 0 : 12;
+                } else if (modifier === "PM") {
+                   hours += 12;
+                }
+                endHour = hours;
+                endMinute = parseInt(minutes, 10);
+             } catch(e) { }
+          }
+          
+          const bookingEndTime = new Date(year, month - 1, day, endHour, endMinute, 0, 0);
+          const now = new Date();
+          
+          // If the booking's end time is in the future, the user has an active booking
+          if (bookingEndTime > now) {
+             hasActiveBooking = true;
+          }
+        });
+
+        setIsBooked(hasActiveBooking);
       } catch (error) {
         console.error("Error checking booking status:", error);
       }

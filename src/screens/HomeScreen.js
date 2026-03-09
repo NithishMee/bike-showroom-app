@@ -234,13 +234,9 @@ const HomeScreen = ({ navigation }) => {
           onChangeText={setSearchQuery}
           placeholderTextColor={COLORS.textLight}
         />
-        {searchQuery.length > 0 ? (
+        {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
             <Ionicons name="close-circle" size={24} color={COLORS.textLight} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="options-outline" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -418,6 +414,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
     fontWeight: '500',
+    outlineStyle: 'none',
   },
   filterButton: {
     padding: 4,
