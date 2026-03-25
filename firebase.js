@@ -1,9 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration
-// Replace these values with your Firebase project credentials
 const firebaseConfig = {
   apiKey: "AIzaSyAvyhBJSsqkCsN0eyz8cWQS6HUwTcCr1mA",
   authDomain: "bike-showroom-18d4f.firebaseapp.com",
@@ -19,6 +19,11 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore
 export const db = getFirestore(app);
-export const auth = getAuth(app);
+
+// Initialize Auth specifically for React Native
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
 
 export default app;
+

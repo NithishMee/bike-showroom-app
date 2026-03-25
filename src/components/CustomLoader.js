@@ -15,7 +15,7 @@ const CustomLoader = () => {
                 toValue: 1,
                 duration: 2000,
                 easing: Easing.linear,
-                useNativeDriver: true,
+                useNativeDriver: false,
             })
         ).start();
 
@@ -25,12 +25,12 @@ const CustomLoader = () => {
                 Animated.timing(pulseValue, {
                     toValue: 1.2,
                     duration: 1000,
-                    useNativeDriver: true,
+                    useNativeDriver: false,
                 }),
                 Animated.timing(pulseValue, {
                     toValue: 1,
                     duration: 1000,
-                    useNativeDriver: true,
+                    useNativeDriver: false,
                 }),
             ])
         ).start();

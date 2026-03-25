@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../utils/theme';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebase';
+import { AuthContext } from '../context/AuthContext';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -19,6 +20,7 @@ import EnquiryFormScreen from '../screens/EnquiryFormScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import OfferDetailsScreen from '../screens/OfferDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -85,12 +87,14 @@ function AuthStack() {
 function AppNavigator() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       // Only set user if email is verified
-      if (user && user.emailVerified) {
-        setUser(user);
+      if (authUser && authUser.emailVerified) {
+        setUser(authUser);
+        setIsGuest(false); // Reset guest if they login successfully
       } else {
         setUser(null);
       }
@@ -109,42 +113,49 @@ function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false
-      }}
-    >
-      {user ? (
-        <>
+    <AuthContext.Provider value={{ user, isGuest, setIsGuest }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false
+        }}
+      >
+        {user || isGuest ? (
+          <>
+            <Stack.Screen
+              name="MainTabs"
+              component={TabNavigator}
+            />
+            <Stack.Screen
+              name="BikeDetails"
+              component={BikeDetailsScreen}
+            />
+            <Stack.Screen
+              name="TestRideBooking"
+              component={TestRideBookingScreen}
+            />
+            <Stack.Screen
+              name="EnquiryForm"
+              component={EnquiryFormScreen}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+            />
+            <Stack.Screen
+              name="OfferDetails"
+              component={OfferDetailsScreen}
+            />
+          </>
+        ) : (
           <Stack.Screen
-            name="MainTabs"
-            component={TabNavigator}
+            name="Auth"
+            component={AuthStack}
           />
-          <Stack.Screen
-            name="BikeDetails"
-            component={BikeDetailsScreen}
-          />
-          <Stack.Screen
-            name="TestRideBooking"
-            component={TestRideBookingScreen}
-          />
-          <Stack.Screen
-            name="EnquiryForm"
-            component={EnquiryFormScreen}
-          />
-          <Stack.Screen
-            name="Profile"
-            component={ProfileScreen}
-          />
-        </>
-      ) : (
-        <Stack.Screen
-          name="Auth"
-          component={AuthStack}
-        />
-      )}
-    </Stack.Navigator>
+        )}
+      </Stack.Navigator>
+    </AuthContext.Provider>
   );
 }
 
 export default AppNavigator;
+

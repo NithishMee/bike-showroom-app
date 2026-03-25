@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, ActivityIndicator, Animated, Dimensions, StatusBar, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +9,7 @@ import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 
 const { width } = Dimensions.get('window');
 
-const OffersScreen = () => {
+const OffersScreen = ({ navigation }) => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +43,11 @@ const OffersScreen = () => {
 
   const renderOfferCard = ({ item, index }) => {
     return (
-      <TouchableOpacity activeOpacity={0.95} style={styles.heroOfferCard}>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('OfferDetails', { offer: item })}
+        activeOpacity={0.95} 
+        style={styles.heroOfferCard}
+      >
         <LinearGradient
           colors={index % 2 === 0 ? ['#E53935', '#B71C1C'] : ['#1E88E5', '#0D47A1']} // Alternating gradients
           start={{ x: 0, y: 0 }}
@@ -66,9 +71,6 @@ const OffersScreen = () => {
 
             <Text style={styles.heroTitle}>{item.title}</Text>
             <Text style={styles.heroDiscount}>{item.discount}</Text>
-            <Text style={styles.heroDesc} numberOfLines={2}>{item.description}</Text>
-
-
           </View>
 
           {/* Hero Icon */}
@@ -84,7 +86,7 @@ const OffersScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       {/* Premium Red Gradient Header */}
@@ -107,7 +109,7 @@ const OffersScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -157,7 +159,7 @@ const styles = StyleSheet.create({
   // New Hero Card Styles
   heroOfferCard: {
     width: '100%',
-    height: 240, // Fixed height for uniformity
+    height: 180, // Reduced height for uniformity after removing description
     marginBottom: 20,
     borderRadius: 24,
     overflow: 'hidden',
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 18,
     color: '#fff',
     fontWeight: '700',
     marginBottom: 2,
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   heroDiscount: {
-    fontSize: 36,
+    fontSize: 28,
     color: '#fff',
     fontWeight: '900',
     letterSpacing: -1,

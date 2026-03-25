@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Dimensions, Image, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -202,7 +203,7 @@ const HomeScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       {/* Custom Header */}
@@ -353,7 +354,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View >
+    </SafeAreaView>
   );
 };
 

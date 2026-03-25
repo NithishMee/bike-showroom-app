@@ -8,9 +8,9 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
-  Dimensions,
-  SafeAreaView
+  Dimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 const { width } = Dimensions.get('window');
 
 const CompareScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [bikes, setBikes] = useState([]);
   const [selectedBikes, setSelectedBikes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,19 +145,20 @@ const CompareScreen = ({ navigation }) => {
       {/* Background Gradient Header */}
       <LinearGradient
         colors={[COLORS.primaryDark, COLORS.primary]}
-        style={styles.headerBackground}
+        style={[
+          styles.headerBackground, 
+          { paddingTop: Math.max(insets.top + 10, 40), height: 210 + insets.top }
+        ]}
       >
-        <SafeAreaView>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Comparison</Text>
-            <TouchableOpacity onPress={clearSelection}>
-              <Text style={styles.clearText}>Reset</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Comparison</Text>
+          <TouchableOpacity onPress={clearSelection}>
+            <Text style={styles.clearText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <View style={styles.mainContent}>

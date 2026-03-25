@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../firebase';
+import { AuthContext } from '../context/AuthContext';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +24,9 @@ const SignupScreen = ({ navigation }) => {
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [verificationSent, setVerificationSent] = useState(false);
     const [createdUser, setCreatedUser] = useState(null);
+
+    // Auth Context
+    const { setIsGuest } = useContext(AuthContext);
 
     // Polling Ref
     const pollingInterval = useRef(null);
@@ -124,7 +129,7 @@ const SignupScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                 {/* Premium Header */}
                 <View style={styles.headerContainer}>
@@ -145,7 +150,13 @@ const SignupScreen = ({ navigation }) => {
                                 <Ionicons name="arrow-back" size={24} color={COLORS.white} />
                             </TouchableOpacity>
                             <Text style={styles.headerTitle}>Create Account</Text>
-                            <View style={{ width: 40 }} />
+                            <TouchableOpacity
+                                style={styles.skipButton}
+                                onPress={() => setIsGuest(true)}
+                            >
+                                <Text style={styles.skipButtonText}>Skip</Text>
+                                <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
+                            </TouchableOpacity>
                         </View>
                     </LinearGradient>
                     <View style={styles.curveMask} />
@@ -305,7 +316,7 @@ const SignupScreen = ({ navigation }) => {
                     </View>
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -342,6 +353,20 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: COLORS.white,
+    },
+    skipButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+    },
+    skipButtonText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginRight: 4,
     },
     cardContainer: {
         paddingHorizontal: 20,

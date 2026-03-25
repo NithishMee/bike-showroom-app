@@ -14,6 +14,7 @@ import {
   Platform,
   FlatList
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -254,7 +255,7 @@ const TestRideBookingScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <MinimalModal visible={showSuccess} onClose={handleClose} />
 
@@ -409,7 +410,7 @@ const TestRideBookingScreen = ({ route, navigation }) => {
         </TouchableOpacity>
 
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

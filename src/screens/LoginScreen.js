@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Dimensions, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../firebase';
+import { AuthContext } from '../context/AuthContext';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +15,9 @@ const LoginScreen = ({ navigation, route }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Auth Context
+    const { setIsGuest } = useContext(AuthContext);
 
     // Status States
     const [verificationSent, setVerificationSent] = useState(false);
@@ -107,7 +112,7 @@ const LoginScreen = ({ navigation, route }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
                 {/* Premium Header */}
                 <View style={styles.headerContainer}>
@@ -124,6 +129,16 @@ const LoginScreen = ({ navigation, route }) => {
                         </View>
 
                         <View style={styles.headerContent}>
+                            <View style={styles.navBar}>
+                                <View style={{ flex: 1 }} />
+                                <TouchableOpacity
+                                    style={styles.skipButton}
+                                    onPress={() => setIsGuest(true)}
+                                >
+                                    <Text style={styles.skipButtonText}>Skip</Text>
+                                    <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
+                                </TouchableOpacity>
+                            </View>
                             <View style={styles.logoContainer}>
                                 <Image
                                     source={require('../../assets/hero_logo.png')}
@@ -240,7 +255,7 @@ const LoginScreen = ({ navigation, route }) => {
                     </View>
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -253,13 +268,34 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     headerGradient: {
-        paddingTop: 50, // Reduced from 80
-        paddingBottom: 40, // Reduced from 60
+        paddingTop: 40,
+        paddingBottom: 40,
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
     },
     headerContent: {
         alignItems: 'center',
+    },
+    navBar: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingHorizontal: 20,
+        marginBottom: 10,
+    },
+    skipButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+    },
+    skipButtonText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginRight: 4,
     },
     logoContainer: {
         width: 80,
