@@ -21,6 +21,7 @@ import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import OfferDetailsScreen from '../screens/OfferDetailsScreen';
+import ReviewsScreen from '../screens/ReviewsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -144,6 +145,10 @@ function AppNavigator() {
             <Stack.Screen
               name="OfferDetails"
               component={OfferDetailsScreen}
+            />
+            <Stack.Screen
+              name="Reviews"
+              component={ReviewsScreen}
             />
           </>
         ) : (

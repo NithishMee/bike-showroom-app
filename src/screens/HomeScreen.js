@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Dimensions, Image, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
@@ -11,12 +11,14 @@ import CustomLoader from '../components/CustomLoader';
 import { getWishlist, addToWishlist, removeFromWishlist } from '../utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
+import { AuthContext } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const CATEGORIES = ['All', 'Motorcycles', 'Scooters', 'Premium'];
 
 const HomeScreen = ({ navigation }) => {
+  const { isGuest, setIsGuest } = useContext(AuthContext);
   const [bikes, setBikes] = useState([]);
   const [filteredBikes, setFilteredBikes] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -326,29 +328,46 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.menuContainer}>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setShowProfileMenu(false);
-                    navigation.navigate('Profile');
-                  }}
-                >
-                  <Ionicons name="person-circle-outline" size={24} color={COLORS.textPrimary} />
-                  <Text style={styles.menuText}>My Profile</Text>
-                </TouchableOpacity>
+                {!isGuest && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setShowProfileMenu(false);
+                        navigation.navigate('Profile');
+                      }}
+                    >
+                      <Ionicons name="person-circle-outline" size={24} color={COLORS.textPrimary} />
+                      <Text style={styles.menuText}>My Profile</Text>
+                    </TouchableOpacity>
 
-                <View style={styles.menuDivider} />
+                    <View style={styles.menuDivider} />
+                  </>
+                )}
 
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setShowProfileMenu(false);
-                    signOut(auth);
-                  }}
-                >
-                  <Ionicons name="log-out-outline" size={24} color={COLORS.error || '#D32F2F'} />
-                  <Text style={[styles.menuText, { color: COLORS.error || '#D32F2F' }]}>Logout</Text>
-                </TouchableOpacity>
+                {isGuest ? (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setShowProfileMenu(false);
+                      setIsGuest(false);
+                    }}
+                  >
+                    <Ionicons name="log-in-outline" size={24} color={COLORS.primary || '#D32F2F'} />
+                    <Text style={[styles.menuText, { color: COLORS.primary || '#D32F2F' }]}>Login</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setShowProfileMenu(false);
+                      signOut(auth);
+                    }}
+                  >
+                    <Ionicons name="log-out-outline" size={24} color={COLORS.error || '#D32F2F'} />
+                    <Text style={[styles.menuText, { color: COLORS.error || '#D32F2F' }]}>Logout</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </TouchableWithoutFeedback>
           </View>

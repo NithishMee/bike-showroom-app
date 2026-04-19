@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -6,101 +6,92 @@ import {
   ScrollView, 
   TouchableOpacity, 
   StatusBar, 
-  Dimensions,
   Platform,
-  ImageBackground
+  Animated,
+  Easing
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SIZES, SHADOWS } from '../utils/theme';
 
-const { width, height } = Dimensions.get('window');
-
 const OfferDetailsScreen = ({ route, navigation }) => {
   const { offer } = route.params;
 
-  // Premium dark red/black gradient aesthetic
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(30)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, [fadeAnim, translateYAnim]);
+
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const isAltMode = parseInt(offer.id || '0', 36) % 2 === 0;
-  
-  // Use a very premium dark theme approach for the header
-  const gradientColors = isAltMode ? ['#000000', '#1A1A1A'] : ['#EE2824', '#8A1512'];
-  const accentColor = isAltMode ? COLORS.primary : '#FFFFFF';
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
 
-      {/* Premium Header/Hero Area */}
-      <View style={styles.headerContainer}>
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        >
-          {/* subtle pattern overlay */}
-          <View style={styles.patternDots}>
-            {[...Array(30)].map((_, i) => (
-              <View 
-                key={i} 
-                style={[
-                  styles.patternDot, 
-                  { 
-                    left: Math.random() * width, 
-                    top: Math.random() * (height * 0.4), 
-                    opacity: Math.random() * 0.2,
-                    backgroundColor: isAltMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)'
-                  }
-                ]} 
-              />
-            ))}
-          </View>
+      {/* Floating Back Button */}
+      <TouchableOpacity 
+        onPress={() => navigation.goBack()} 
+        style={styles.backButton}
+      >
+        <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+      </TouchableOpacity>
 
-          {/* Large decorative icon fading into background */}
-          <Ionicons 
-            name="pricetags" 
-            size={width * 0.8} 
-            color={isAltMode ? "rgba(238, 40, 36, 0.05)" : "rgba(255, 255, 255, 0.08)"} 
-            style={styles.bgIconLarge} 
-          />
-          
-          <SafeAreaView>
-            <View style={styles.headerTop}>
-              <TouchableOpacity 
-                onPress={() => navigation.goBack()} 
-                style={styles.backButton}
-              >
-                <Ionicons name="chevron-back" size={28} color={COLORS.white} />
-              </TouchableOpacity>
-              <View style={styles.headerPill}>
-                <Ionicons name="star" size={14} color="#FFD700" style={{ marginRight: 6 }} />
-                <Text style={styles.headerPillText}>Premium Offer</Text>
-              </View>
-              {/* Balance for back button */}
-              <View style={{ width: 44 }} />
-            </View>
-
-            <View style={styles.heroContent}>
-              <Text style={styles.discountText}>{offer.discount}</Text>
-              <Text style={styles.titleText}>{offer.title}</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </View>
-
-      {/* Main Content Area (Overlapping the hero) */}
-      <ScrollView 
+      {/* Main Content Area */}
+      <Animated.ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
         bounces={true}
+        style={{ opacity: fadeAnim, transform: [{ translateY: translateYAnim }] }}
       >
         <View style={styles.mainCard}>
           
+          {/* Header info moved to card */}
+          <View style={styles.titleSection}>
+            <View style={styles.discountBadge}>
+               <Text style={styles.discountText}>{offer.discount}</Text>
+            </View>
+            <Text style={styles.titleText}>{offer.title}</Text>
+          </View>
+
           {/* Validity Row */}
           <View style={styles.validityContainer}>
-            <View style={styles.validityIconBox}>
+            <LinearGradient
+               colors={['rgba(238, 40, 36, 0.1)', 'rgba(238, 40, 36, 0.05)']}
+               style={styles.validityIconBox}
+            >
                 <Ionicons name="timer-outline" size={24} color={COLORS.primary} />
-            </View>
+            </LinearGradient>
             <View style={styles.validityTextContainer}>
               <Text style={styles.validityLabel}>Valid Until</Text>
               <Text style={styles.validityValue}>
@@ -109,6 +100,7 @@ const OfferDetailsScreen = ({ route, navigation }) => {
             </View>
             {offer.validUntil !== 'Always On' && (
               <View style={styles.urgencyBadge}>
+                <View style={styles.pulsingDot} />
                 <Text style={styles.urgencyText}>Ending Soon</Text>
               </View>
             )}
@@ -117,7 +109,7 @@ const OfferDetailsScreen = ({ route, navigation }) => {
           <View style={styles.divider} />
 
           {/* Description Segment */}
-          <Text style={styles.sectionTitle}>Offer Details</Text>
+          <Text style={styles.sectionTitle}>About this offer</Text>
           <Text style={styles.description}>{offer.description}</Text>
 
           {/* Value Props Grid */}
@@ -169,133 +161,79 @@ const OfferDetailsScreen = ({ route, navigation }) => {
 
         </View>
 
-        {/* Spacing for bottom CTA */}
-        <View style={{ height: 120 }} />
-      </ScrollView>
+        {/* Bottom padding */}
+        <View style={{ height: 40 }} />
+      </Animated.ScrollView>
 
-      {/* Floating Action Bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => navigation.navigate('Home')}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={COLORS.primaryGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.actionGradient}
-          >
-            <Text style={styles.actionButtonText}>View Eligible Bikes</Text>
-            <Ionicons name="arrow-forward" size={22} color={COLORS.white} />
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
 
-// Top spacing wrapper
-const SafeAreaView = ({ children }) => (
-  <View style={{ paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 15 }}>
-    {children}
-  </View>
-);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7', 
-  },
-  headerContainer: {
-    height: Platform.OS === 'ios' ? height * 0.40 : height * 0.44, 
-    width: '100%',
-  },
-  headerGradient: {
-    flex: 1,
-  },
-  patternDots: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  patternDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  bgIconLarge: {
-    position: 'absolute',
-    right: -width * 0.2,
-    top: height * 0.05,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    backgroundColor: '#F8F9FB', 
   },
   backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? StatusBar.currentHeight + 15 : 55,
+    left: 20,
+    zIndex: 10,
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  headerPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  headerPillText: {
-    color: '#fff',
+  headerTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  heroContent: {
-    paddingHorizontal: 24,
-    paddingTop: height * 0.02,
-  },
-  discountText: {
-    fontSize: 54,
-    color: COLORS.white,
-    fontWeight: '900',
-    letterSpacing: -2,
-    marginBottom: 8,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 10,
-  },
-  titleText: {
-    fontSize: 24,
-    color: 'rgba(255,255,255,0.95)',
-    fontWeight: '600',
-    lineHeight: 32,
-    maxWidth: '90%',
+    color: COLORS.textPrimary,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    padding: 16,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 80 : 120,
   },
   mainCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 28,
+    borderRadius: 24,
     padding: 24,
-    marginTop: -50, // This is what pulls the card up over the header
-    ...SHADOWS.dark,
+    ...SHADOWS.medium,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
     marginBottom: 20,
+  },
+  titleSection: {
+    marginBottom: 24,
+  },
+  discountBadge: {
+    backgroundColor: 'rgba(238, 40, 36, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+  },
+  discountText: {
+    fontSize: 28,
+    color: COLORS.primary,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  titleText: {
+    fontSize: 24,
+    color: COLORS.textPrimary,
+    fontWeight: '800',
+    lineHeight: 32,
   },
   validityContainer: {
     flexDirection: 'row',
@@ -305,7 +243,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 16,
-    backgroundColor: 'rgba(238, 40, 36, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -314,9 +251,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   validityLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.textLight,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -327,12 +264,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   urgencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF0F0',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFE0E0',
+    borderRadius: 10,
+  },
+  pulsingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+    marginRight: 6,
   },
   urgencyText: {
     color: COLORS.primary,
@@ -342,21 +286,22 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F0F2F5',
     marginVertical: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 16,
+    marginBottom: 12,
     letterSpacing: 0.2,
   },
   description: {
     fontSize: 15,
-    color: '#444',
+    color: COLORS.textSecondary,
     lineHeight: 24,
     marginBottom: 30,
+    fontWeight: '500',
   },
   perksGrid: {
     flexDirection: 'row',
@@ -372,7 +317,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#F0F2F5',
   },
   perkIconWrapper: {
     width: 44,
@@ -386,7 +331,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   perkSubtext: {
     fontSize: 11,
@@ -395,11 +340,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   termsContainer: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAFAFC',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#F0F2F5',
   },
   termsHeaderRow: {
     flexDirection: 'row',
@@ -408,7 +353,7 @@ const styles = StyleSheet.create({
   },
   termsTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.textSecondary,
     marginLeft: 8,
   },
@@ -423,33 +368,43 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: COLORS.textLight,
     marginTop: 8,
-    marginRight: 10,
+    marginRight: 12,
   },
   termText: {
     flex: 1,
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 20,
+    fontWeight: '500',
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: 20,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    ...SHADOWS.medium,
-    shadowOffset: { width: 0, height: -4 },
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    ...SHADOWS.dark,
+    shadowOffset: { width: 0, height: -8 },
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 20,
   },
   actionButton: {
     width: '100%',
-    height: 60,
+    height: 56,
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
   actionGradient: {
     flex: 1,
@@ -461,7 +416,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 17,
     fontWeight: '800',
-    marginRight: 12,
+    marginRight: 10,
     letterSpacing: 0.5,
   },
 });

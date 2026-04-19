@@ -345,25 +345,13 @@ const BikeDetailsScreen = ({ route, navigation }) => {
 
           <View style={styles.reviewsListContainer}>
             {reviews.length > 0 ? (
-               reviews.map((review) => (
-                 <View key={review.id} style={styles.reviewCard}>
-                   <View style={styles.reviewHeader}>
-                     <View style={styles.reviewerInfo}>
-                         <View style={styles.avatarCircle}>
-                             <Text style={styles.avatarText}>{review.userName.charAt(0).toUpperCase()}</Text>
-                         </View>
-                         <View>
-                             <Text style={styles.reviewUserName}>{review.userName}</Text>
-                             <Text style={styles.reviewDate}>
-                               {review.createdAt?.toDate ? review.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Just now'}
-                             </Text>
-                         </View>
-                     </View>
-                     {renderStars(review.rating, 14)}
-                   </View>
-                   <Text style={styles.reviewComment}>{review.comment}</Text>
-                 </View>
-               ))
+              <TouchableOpacity
+                style={styles.viewAllReviewsBtn}
+                onPress={() => navigation.navigate('Reviews', { bike })}
+              >
+                <Text style={styles.viewAllReviewsText}>View all {reviews.length} user {reviews.length === 1 ? 'review' : 'reviews'}</Text>
+                <Ionicons name="chevron-forward" size={24} color={COLORS.primary} />
+              </TouchableOpacity>
             ) : (
               <View style={styles.emptyReviewsContainer}>
                   <Ionicons name="chatbubbles-outline" size={40} color={COLORS.textLight} />
@@ -727,6 +715,22 @@ const styles = StyleSheet.create({
   },
   reviewsListContainer: {
     marginBottom: 30,
+  },
+  viewAllReviewsBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    padding: 18,
+    borderRadius: SIZES.radius,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    ...SHADOWS.light,
+  },
+  viewAllReviewsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
   reviewCard: {
     backgroundColor: COLORS.white,
